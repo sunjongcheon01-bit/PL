@@ -49,6 +49,9 @@ Photoluminescence(PL) 현미경으로 Si / SiGe 적층의 격자 결함이 어�
 powershell -ExecutionPolicy Bypass -File atlas\build.ps1
 ```
 
+## 실리콘 격자 결함 교실 (`si_lattice.html`)
+실리콘 다이아몬드 격자의 3D 단위 격자, (100)·(110)·(111) 면과 방향 표기법, 그리고 주요 격자 결함(공공, 격자간 원자, 도펀트, 금속 불순물, 산소 석출물, 보이드, 적층 결함, 전위, 전위 루프)이 생기는 과정을 원자 단위로 보여주는 학습용 페이지입니다. 원자 그림은 실제 좌표를 X-TEM과 같은 [1-10] 방향으로 투영했고, 끊어진 결합은 3차원 원자 간 거리로 계산합니다. 더블클릭해 열면 되며, 3D 보기는 인터넷 연결이 필요합니다.
+
 ## 파일 구성
 | 파일 | 내용 |
 |---|---|
@@ -62,6 +65,7 @@ powershell -ExecutionPolicy Bypass -File atlas\build.ps1
 | `js/render.js`, `js/ui.js` | 화면 |
 | `js/tests.js`, `js/guide.js` | 검증, 원리 설명 |
 | `defect_atlas.html`, `atlas/` | 결함 아틀라스 (발표용) |
+| `si_lattice.html` | 실리콘 격자 결함 교실 (학습용) |
 
 ## 성능 참고
 기본 설정(100×100 µm, dx 1 µm, 깊이 50 µm, 약 0.5 M 셀)에서 걸리는 시간은 대략 다음과 같습니다.

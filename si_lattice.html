@@ -1,0 +1,776 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>실리콘 격자 결함 교실</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 교과서식 세 장(결정 → 면과 방향 → 결함). 각 장은 왼쪽 설명 + 오른쪽 조작 가능한 그림. 결함 장은 위 목록, 아래 원자 그림과 설명 카드 */
+:root {
+  --paper: #f2f4f6; --panel: #ffffff; --ink: #121821; --muted: #586274; --line: #d6dbe3; --soft: #e8ecf1;
+  --si: #3d6fb6;       /* 실리콘 원자 */
+  --si-b: #6f95cc;     /* 두 번째 FCC */
+  --bad: #d23a4a;      /* 끊어진 결합 */
+  --dop-b: #1f9a7a; --dop-p: #d08a1c; --metal: #8c3fbf; --oxy: #e2563a;
+  --plane: #e0a23a;
+  --f-body: "IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1318; --panel: #161b22; --ink: #e6eaf0; --muted: #97a1b2; --line: #2b323d; --soft: #1d242d;
+    --si: #6c9be0; --si-b: #9dbbe6; --bad: #f2667a; --dop-b: #43c7a3; --dop-p: #ebb052; --metal: #b97ae6; --oxy: #f27f62; --plane: #f0b856;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1318; --panel: #161b22; --ink: #e6eaf0; --muted: #97a1b2; --line: #2b323d; --soft: #1d242d;
+  --si: #6c9be0; --si-b: #9dbbe6; --bad: #f2667a; --dop-b: #43c7a3; --dop-p: #ebb052; --metal: #b97ae6; --oxy: #f27f62; --plane: #f0b856;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.65 var(--f-body); }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 30px 60px; display: grid; gap: 40px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(27px, 3.6vw, 40px); font-weight: 700; letter-spacing: -0.015em; }
+h2 { font-size: 23px; font-weight: 700; }
+h3 { font-size: 16px; font-weight: 600; }
+p { margin: 0; }
+.eyebrow { font: 600 12px var(--f-mono); letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; }
+.lede { max-width: 70ch; color: var(--muted); font-size: 16px; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.head { display: grid; gap: 12px; }
+
+.chapter { display: grid; gap: 18px; }
+.chapter > header { display: grid; gap: 6px; }
+.chapter > header .no { font: 600 13px var(--f-mono); color: var(--bad); }
+.split { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 22px; align-items: start; }
+.prose { display: grid; gap: 12px; max-width: 64ch; min-width: 0; }
+.prose ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.fact { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; display: grid; gap: 2px; }
+.fact b { font: 600 17px var(--f-mono); }
+.fact span { font-size: 12.5px; color: var(--muted); }
+
+.stage { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 10px; min-width: 0; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.seg button { border: 0; background: none; color: var(--muted); padding: 6px 12px; font: 500 13px var(--f-body); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+button:focus-visible { outline: 2px solid var(--bad); outline-offset: 2px; }
+.chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); cursor: pointer; }
+.v3 { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: 70vh; border-radius: 8px; background: var(--soft); overflow: hidden; touch-action: none; cursor: grab; }
+.v3:active { cursor: grabbing; }
+.v3 canvas { display: block; width: 100%; height: 100%; }
+.v3 .lb { position: absolute; transform: translate(-50%, -50%); font: 600 12px var(--f-mono); pointer-events: none; white-space: nowrap; padding: 0 5px; border-radius: 4px; background: color-mix(in srgb, var(--panel) 75%, transparent); }
+.v3 .msg { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); padding: 16px; text-align: center; }
+.cap { font-size: 13px; color: var(--muted); }
+
+.planes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.pcard { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--panel); display: grid; gap: 6px; cursor: pointer; text-align: left; color: var(--ink); font: inherit; align-content: start; }
+.pcard:hover { border-color: var(--plane); }
+.pcard[aria-pressed="true"] { border-color: var(--plane); box-shadow: inset 0 0 0 1px var(--plane); }
+.pcard .nm { font: 600 20px var(--f-mono); color: var(--plane); }
+.pcard p { font-size: 13.5px; }
+.pcard .why { font-size: 13px; color: var(--muted); }
+table.notation { border-collapse: collapse; font-size: 14px; width: 100%; }
+table.notation td, table.notation th { border-bottom: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+table.notation th { font: 600 12px var(--f-mono); color: var(--muted); background: var(--soft); }
+table.notation td:first-child { font: 600 15px var(--f-mono); white-space: nowrap; }
+.tbl { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+
+.wafer svg { width: 100%; height: auto; display: block; }
+.wafer text { font-family: var(--f-body); }
+
+/* 결함 */
+.dlist { display: flex; flex-wrap: wrap; gap: 8px; }
+.dgroup { display: grid; gap: 6px; }
+.dgroup .gl { font: 600 11.5px var(--f-mono); color: var(--muted); letter-spacing: 0.05em; }
+.dgroup .row { display: flex; flex-wrap: wrap; gap: 6px; }
+.dbtn { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 6px 13px; font: 500 14px var(--f-body); cursor: pointer; }
+.dbtn[aria-current="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.dview { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.cv-atoms { width: 100%; aspect-ratio: 16 / 10; display: block; border-radius: 8px; background: var(--soft); }
+.viewtag { font: 500 12px var(--f-mono); border: 1px dashed var(--muted); border-radius: 6px; padding: 2px 8px; }
+.ctl { display: flex; gap: 10px; align-items: center; }
+.ctl input[type=range] { flex: 1; min-width: 0; accent-color: var(--bad); }
+.play { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 5px 12px; font: 500 13px var(--f-body); cursor: pointer; white-space: nowrap; }
+.stages { display: flex; flex-wrap: wrap; gap: 6px; }
+.stages button { border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 3px 11px; font: 12.5px var(--f-body); cursor: pointer; }
+.stages button[aria-current="true"] { background: var(--bad); color: #fff; border-color: var(--bad); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted); align-items: center; }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.legend i.ring { background: none; border: 2px solid var(--bad); }
+.legend i.faint { background: var(--si); opacity: 0.35; }
+.info { display: grid; gap: 14px; min-width: 0; }
+.info .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.info .tag { font: 12px var(--f-mono); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--muted); }
+.info h3 + * { margin-top: 2px; }
+.info ul { margin: 0; padding-left: 19px; display: grid; gap: 3px; font-size: 14.5px; }
+.info .blk { display: grid; gap: 5px; }
+.info .blk > .k { font: 600 12px var(--f-mono); letter-spacing: 0.05em; color: var(--muted); }
+.info .stepdesc { background: var(--soft); border-radius: 8px; padding: 10px 13px; font-size: 14.5px; border-left: 3px solid var(--bad); }
+.foot { font-size: 13px; color: var(--muted); max-width: 100ch; display: grid; gap: 6px; }
+
+@media (max-width: 960px) {
+  .split, .dview { grid-template-columns: 1fr; }
+  .planes { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <span class="eyebrow">DRAM · 로직 반도체의 실리콘</span>
+    <h1>실리콘 격자 결함 교실</h1>
+    <p class="lede">반도체 소자는 실리콘 단결정 웨이퍼 위에 만들어집니다. 실리콘 원자가 어떻게 배열되어 있는지, (100)·(110)·(111) 같은 이름이 무슨 뜻인지, 그리고 그 배열이 어떻게 깨져 결함이 되는지를 원자 그림으로 직접 돌리고 움직여 보며 이해합니다.</p>
+  </header>
+
+  <!-- 1장 -->
+  <section class="chapter" id="crystal">
+    <header><span class="no">1장</span><h2>실리콘은 어떤 결정인가</h2></header>
+    <div class="split">
+      <div class="prose">
+        <p>실리콘 원자는 바깥 전자가 4개라서 <b>이웃 원자 4개와 손을 하나씩 잡습니다</b>(공유 결합). 네 손은 서로 가장 멀리 떨어지려고 정사면체의 꼭짓점 방향(서로 109.5°)을 향합니다.</p>
+        <p>이 규칙대로 원자를 끝없이 이어 붙인 모양이 <b>다이아몬드 구조</b>입니다. 다이아몬드(탄소)와 배열이 같아서 붙은 이름입니다. 같은 모양의 작은 정육면체(<b>단위 격자</b>)가 3차원으로 반복됩니다.</p>
+        <ul>
+          <li><b>두 FCC가 겹친 구조</b>: 면심입방(FCC) 격자 두 개를 대각선 방향으로 ¼씩 어긋나게 겹친 모양입니다. 오른쪽에서 "두 FCC 색 구분"을 켜 보세요.</li>
+          <li><b>모든 원자가 같은 처지</b>: 어느 원자를 골라도 이웃 4개와 결합해 있습니다. 결합이 하나라도 끊기면, 그곳이 전기적으로 문제가 되는 <b>결함</b>입니다.</li>
+        </ul>
+        <div class="facts">
+          <div class="fact"><b>5.431 Å</b><span>격자 상수 (정육면체 한 변)</span></div>
+          <div class="fact"><b>2.35 Å</b><span>원자 사이 거리 (결합 길이)</span></div>
+          <div class="fact"><b>109.5°</b><span>결합 사이 각도</span></div>
+          <div class="fact"><b>5.0 × 10²²</b><span>원자 수 / cm³</span></div>
+        </div>
+        <p class="muted" style="font-size:13px">1 Å(옹스트롬) = 0.1 nm. 머리카락 굵기에 실리콘 원자 약 30만 개가 들어갑니다.</p>
+      </div>
+      <div class="stage">
+        <div class="bar">
+          <div class="seg" role="group" aria-label="결정 크기">
+            <button id="n1" aria-pressed="true">단위 격자 1개</button>
+            <button id="n2" aria-pressed="false">2 × 2 × 2</button>
+          </div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <label class="chk"><input type="checkbox" id="chkFcc"> 두 FCC 색 구분</label>
+            <label class="chk"><input type="checkbox" id="chkTet" checked> 정사면체 결합 강조</label>
+          </div>
+        </div>
+        <div class="v3" id="v3" aria-label="실리콘 단위 격자 3D — 드래그해서 회전"></div>
+        <p class="cap" id="v3cap">드래그해서 돌려 보세요. 빨간 원자 하나가 이웃 4개(정사면체 꼭짓점)와 결합한 모습이 실리콘 결합의 기본 단위입니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2장 -->
+  <section class="chapter" id="planes">
+    <header><span class="no">2장</span><h2>(100), (110), (111)은 무슨 뜻인가</h2></header>
+    <div class="split">
+      <div class="prose">
+        <p>결정은 방향마다 원자가 늘어선 모습이 다릅니다. 그래서 "어느 면, 어느 방향"인지 이름을 붙여 부릅니다. 숫자 세 개는 차례로 <b>x, y, z</b>축입니다.</p>
+        <ul>
+          <li><b>(100)</b>: x축에 수직인 면. 정육면체의 옆면입니다.</li>
+          <li><b>(110)</b>: x와 y를 똑같이 가로지르는 대각선 면.</li>
+          <li><b>(111)</b>: x, y, z를 똑같이 가로지르는 면. 꼭짓점 세 개를 잇는 삼각형입니다.</li>
+        </ul>
+        <p>괄호 모양에도 뜻이 있습니다.</p>
+        <div class="tbl"><table class="notation">
+          <tr><th>표기</th><th>뜻</th><th>예</th></tr>
+          <tr><td>( )</td><td>면 하나</td><td>(100) 웨이퍼 = 표면이 (100)면</td></tr>
+          <tr><td>{ }</td><td>같은 종류의 면 전체</td><td>{111} = (111), (1-11), (11-1) … 8개 면</td></tr>
+          <tr><td>[ ]</td><td>방향 하나 (면에 수직)</td><td>[001] = 웨이퍼 표면에 수직, 깊이 방향</td></tr>
+          <tr><td>&lt; &gt;</td><td>같은 종류의 방향 전체</td><td>&lt;110&gt; = 노치·칩 가장자리 방향</td></tr>
+        </table></div>
+        <p class="muted" style="font-size:13px">숫자 위의 막대(1̄)는 음수 방향입니다. 이 페이지에서는 입력 편의상 -1로 씁니다.</p>
+      </div>
+      <div class="stage">
+        <div class="planes" role="group" aria-label="면 선택">
+          <button class="pcard" data-plane="100" aria-pressed="false"><span class="nm">(100)</span><p>정육면체 옆면. 면 위 원자가 듬성듬성 정사각형으로 놓입니다.</p><p class="why">DRAM·로직 웨이퍼 표면. 산화막과의 계면 결함이 가장 적어 트랜지스터에 씁니다.</p></button>
+          <button class="pcard" data-plane="110" aria-pressed="false"><span class="nm">(110)</span><p>대각선으로 자른 면. 원자가 지그재그 줄로 늘어섭니다.</p><p class="why">&lt;110&gt; 방향이 웨이퍼 노치, 칩 가장자리, 트랜지스터 채널 방향입니다. 웨이퍼도 이 방향으로 잘 쪼개집니다.</p></button>
+          <button class="pcard" data-plane="111" aria-pressed="false"><span class="nm">(111)</span><p>삼각형 면. 원자가 가장 빽빽한 육각형 무늬로 놓입니다.</p><p class="why">결정이 미끄러지는 면이라 전위·적층 결함이 이 면 위에 생깁니다. (100) 표면과 54.7° 기울어져 있습니다.</p></button>
+        </div>
+        <p class="cap">카드를 누르면 1장의 3D 그림에 그 면(주황)과 면 위의 원자, 수직 방향 화살표가 표시됩니다. 같은 카드를 한 번 더 누르면 해제됩니다.</p>
+        <div class="wafer">
+          <svg viewBox="0 0 640 300" role="img" aria-label="(100) 웨이퍼와 보는 방향">
+            <g transform="translate(150,150)">
+              <circle r="118" fill="var(--soft)" stroke="var(--muted)" stroke-width="1.5"/>
+              <path d="M -9 116 L 0 104 L 9 116 Z" fill="var(--paper)" stroke="var(--muted)" stroke-width="1.5"/>
+              <g stroke="var(--line)" stroke-width="1">
+                <path d="M -84 -66 H 84 M -96 -33 H 96 M -102 0 H 102 M -96 33 H 96 M -84 66 H 84 M -66 -84 V 84 M -33 -100 V 100 M 0 -104 V 104 M 33 -100 V 100 M 66 -84 V 84"/>
+              </g>
+              <line x1="-112" y1="10" x2="112" y2="10" stroke="var(--bad)" stroke-width="2.4" stroke-dasharray="7 5"/>
+              <text x="0" y="-126" text-anchor="middle" font-size="14" font-weight="600" fill="var(--ink)">(100) 웨이퍼 (위에서 봄)</text>
+              <text x="0" y="141" text-anchor="middle" font-size="12.5" fill="var(--muted)">노치 = &lt;110&gt; 방향 표시</text>
+              <text x="-112" y="2" font-size="12" fill="var(--bad)" font-weight="600">자르는 선 [110]</text>
+              <g transform="translate(0,72)"><path d="M 0 0 L 0 -38" stroke="var(--ink)" stroke-width="2"/><path d="M -6 -30 L 0 -40 L 6 -30" fill="none" stroke="var(--ink)" stroke-width="2"/><text x="9" y="-6" font-size="12" fill="var(--ink)">보는 방향 [1-10]</text></g>
+            </g>
+            <g transform="translate(330,48)">
+              <text x="0" y="0" font-size="14" font-weight="600" fill="var(--ink)">잘라서 옆에서 본 면 (X-TEM과 같은 방향)</text>
+              <rect x="0" y="16" width="290" height="190" fill="var(--soft)" stroke="var(--muted)"/>
+              <line x1="0" y1="16" x2="290" y2="16" stroke="var(--ink)" stroke-width="3"/>
+              <text x="4" y="32" font-size="11.5" fill="var(--muted)">표면 (100)</text>
+              <g stroke="var(--plane)" stroke-width="2">
+                <line x1="40" y1="206" x2="174" y2="16"/>
+                <line x1="250" y1="206" x2="116" y2="16"/>
+              </g>
+              <path d="M 70 206 A 30 30 0 0 0 57 182" fill="none" stroke="var(--ink)"/>
+              <text x="72" y="196" font-size="12" fill="var(--ink)">54.7°</text>
+              <text x="146" y="118" font-size="12.5" fill="var(--plane)" font-weight="600" text-anchor="middle">{111} 면</text>
+              <text x="145" y="226" font-size="12" fill="var(--muted)" text-anchor="middle">가로 = [110] 방향 · 세로 = 깊이 [001]</text>
+              <text x="145" y="244" font-size="12" fill="var(--muted)" text-anchor="middle">3장의 원자 그림은 모두 이 방향에서 본 모습</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3장 -->
+  <section class="chapter" id="defects">
+    <header><span class="no">3장</span><h2>격자 결함 — 왜 생기고, 어떤 모양인가</h2>
+      <p class="lede">결함을 고르고 ▶를 누르면 정상 결정이 결함으로 바뀌는 과정이 원자 단위로 움직입니다. 원자 위치와 결합은 실제 실리콘 좌표(5.431 Å)로 계산했고, 이웃이 4개보다 적어진 원자는 빨간 테두리로 표시됩니다.</p></header>
+    <div class="dlist" id="dlist"></div>
+    <div class="dview">
+      <div class="stage">
+        <div class="bar"><span class="viewtag">보는 방향: [1-10] 단면 · 위쪽 = 웨이퍼 표면 쪽 · 가로 [110]</span><label class="chk"><input type="checkbox" id="chkDang" checked> 끊어진 결합 표시</label></div>
+        <canvas id="cvA" class="cv-atoms" aria-label="원자 배열 그림"></canvas>
+        <div class="ctl"><button class="play" id="play">▶ 처음부터 재생</button><input type="range" id="slider" min="0" max="1" step="0.01" value="1" aria-label="변화 단계"></div>
+        <div class="stages" id="stages" role="group" aria-label="단계"></div>
+        <div class="legend">
+          <span><i style="background:var(--si)"></i>Si</span><span><i class="faint"></i>한 층 뒤쪽 Si</span>
+          <span><i style="background:var(--dop-b)"></i>B</span><span><i style="background:var(--dop-p)"></i>P</span>
+          <span><i style="background:var(--metal)"></i>Fe</span><span><i style="background:var(--oxy)"></i>O</span>
+          <span><i class="ring"></i>끊어진 결합</span>
+        </div>
+      </div>
+      <div class="info" id="info"></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p><b>그림에 대해.</b> 원자 그림은 다이아몬드 구조의 실제 좌표를 [1-10] 방향으로 투영한 것으로, X-TEM 사진에서 보이는 "아령(dumbbell)" 모양 원자 기둥과 같은 배치입니다. 결합은 3차원 거리(2.35 Å 근처)로 다시 계산합니다. 결함 주변의 원자 이완은 이해를 돕기 위한 근사이며, 실리콘에서 흔한 60° 전위는 같은 원리의 90°(Lomer) 전위로 단순화해 그렸습니다.</p>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ss = (u) => { u = Math.min(1, Math.max(0, u)); return u * u * (3 - 2 * u); };
+  function rnd(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function fit(cv) {
+    const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    const w = Math.max(10, Math.round(r.width * dpr)), h = Math.max(10, Math.round(r.height * dpr));
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { g, W: r.width, H: r.height };
+  }
+
+  // =====================================================================
+  // 1·2장: 3D 단위 격자
+  // =====================================================================
+  const V = { n: 1, plane: null, theta: 0.65, phi: 1.1, raf: 0, drag: null, auto: !reduceMotion, labels: [] };
+  function diamond(n) {
+    const fcc = [[0, 0, 0], [0, .5, .5], [.5, 0, .5], [.5, .5, 0]], atoms = [], seen = new Set();
+    for (let i = -1; i <= n; i++) for (let j = -1; j <= n; j++) for (let k = -1; k <= n; k++) for (const f of fcc) for (const [b, sub] of [[0, 0], [.25, 1]]) {
+      const p = [i + f[0] + b, j + f[1] + b, k + f[2] + b];
+      if (p.some(c => c < -1e-6 || c > n + 1e-6)) continue;
+      const key = p.map(c => Math.round(c * 100)).join(',');
+      if (seen.has(key)) continue; seen.add(key); atoms.push({ p, sub });
+    }
+    const bonds = [];
+    for (let a = 0; a < atoms.length; a++) for (let b = a + 1; b < atoms.length; b++) {
+      const d = Math.hypot(atoms[a].p[0] - atoms[b].p[0], atoms[a].p[1] - atoms[b].p[1], atoms[a].p[2] - atoms[b].p[2]);
+      if (Math.abs(d - Math.sqrt(3) / 4) < 0.02) bonds.push([a, b]);
+    }
+    return { atoms, bonds };
+  }
+  function init3D() {
+    const host = $('v3');
+    if (!window.THREE) { host.innerHTML = '<div class="msg">3D 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.</div>'; return false; }
+    try { V.r = new THREE.WebGLRenderer({ antialias: true, alpha: true }); } catch (e) { host.innerHTML = '<div class="msg">이 브라우저에서는 3D(WebGL)를 쓸 수 없습니다.</div>'; return false; }
+    V.r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    host.append(V.r.domElement);
+    V.scene = new THREE.Scene(); V.cam = new THREE.PerspectiveCamera(30, 1.33, 0.05, 100);
+    V.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(3, 5, 4); V.scene.add(dl);
+    V.group = new THREE.Group(); V.scene.add(V.group);
+    const el = V.r.domElement;
+    el.addEventListener('pointerdown', (e) => { V.drag = { x: e.clientX, y: e.clientY }; V.auto = false; el.setPointerCapture(e.pointerId); kick3(); });
+    el.addEventListener('pointermove', (e) => { if (!V.drag) return; V.theta -= (e.clientX - V.drag.x) * 0.009; V.phi = Math.min(3.1, Math.max(0.05, V.phi - (e.clientY - V.drag.y) * 0.009)); V.drag = { x: e.clientX, y: e.clientY }; kick3(); });
+    const end = () => { V.drag = null; }; el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    new ResizeObserver(size3).observe(host);
+    new IntersectionObserver((es) => { V.vis = es[0].isIntersecting; if (V.vis) kick3(); }).observe(host);
+    size3(); return true;
+  }
+  function size3() { const h = $('v3'); if (!V.r) return; const w = h.clientWidth, hh = h.clientHeight; if (!w || !hh) return; V.r.setSize(w, hh, false); V.cam.aspect = w / hh; V.cam.updateProjectionMatrix(); kick3(); }
+  function kick3() { if (V.r && !V.raf) V.raf = requestAnimationFrame(frame3); }
+  function frame3() {
+    V.raf = 0;
+    if (V.auto) V.theta += 0.004;
+    const c = V.n / 2, d = 3.1 * V.n + 0.6;
+    V.cam.position.set(c + d * Math.sin(V.phi) * Math.sin(V.theta), c + d * Math.cos(V.phi), c + d * Math.sin(V.phi) * Math.cos(V.theta));
+    V.cam.lookAt(c, c, c);
+    V.r.render(V.scene, V.cam);
+    const host = $('v3'), w = host.clientWidth, h = host.clientHeight, v = new THREE.Vector3();
+    for (const L of V.labels) { v.copy(L.pos).project(V.cam); L.el.style.left = ((v.x + 1) / 2 * w) + 'px'; L.el.style.top = ((1 - v.y) / 2 * h) + 'px'; L.el.style.display = v.z > 1 ? 'none' : ''; }
+    if (V.auto && V.vis !== false) kick3();
+  }
+  function build3() {
+    if (!V.r && !init3D()) return;
+    V.group.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
+    V.group.clear(); V.labels.forEach(L => L.el.remove()); V.labels = [];
+    const n = V.n, D = diamond(n), col = (v) => new THREE.Color(css(v));
+    // Three.js 좌표: x→x, y(위)→z, z→y  (z축을 위로)
+    const P3 = (p) => new THREE.Vector3(p[0], p[2], p[1]);
+    const showFcc = $('chkFcc').checked, showTet = $('chkTet').checked && !V.plane;
+    const onPlane = (p) => {
+      if (V.plane === '100') return Math.abs(p[0]) < 1e-6;
+      if (V.plane === '110') return Math.abs(p[0] + p[1] - n) < 1e-6;
+      if (V.plane === '111') return Math.abs(p[0] + p[1] + p[2] - n) < 1e-6;
+      return false;
+    };
+    const tetC = [0.25, 0.25, 0.25];
+    const isTet = (p) => showTet && (Math.hypot(p[0] - tetC[0], p[1] - tetC[1], p[2] - tetC[2]) < 0.45);
+    const sphere = new THREE.SphereGeometry(0.065, 20, 14);
+    D.atoms.forEach(a => {
+      let c = a.sub && showFcc ? col('--si-b') : col('--si');
+      if (V.plane && onPlane(a.p)) c = col('--plane');
+      if (showTet && Math.hypot(a.p[0] - .25, a.p[1] - .25, a.p[2] - .25) < 1e-6) c = col('--bad');
+      const m = new THREE.Mesh(sphere, new THREE.MeshStandardMaterial({ color: c, roughness: 0.45, transparent: !!V.plane && !onPlane(a.p), opacity: V.plane && !onPlane(a.p) ? 0.35 : 1 }));
+      m.position.copy(P3(a.p)); if (V.plane && onPlane(a.p)) m.scale.setScalar(1.35);
+      V.group.add(m);
+    });
+    D.bonds.forEach(([i, j]) => {
+      const A = P3(D.atoms[i].p), B = P3(D.atoms[j].p), len = A.distanceTo(B);
+      const hot = isTet(D.atoms[i].p) && isTet(D.atoms[j].p) && (Math.hypot(...D.atoms[i].p.map((c, k) => c - tetC[k])) < 1e-6 || Math.hypot(...D.atoms[j].p.map((c, k) => c - tetC[k])) < 1e-6);
+      const g = new THREE.CylinderGeometry(hot ? 0.022 : 0.014, hot ? 0.022 : 0.014, len, 8);
+      const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: hot ? col('--bad') : col('--muted'), transparent: true, opacity: V.plane ? 0.35 : 0.9 }));
+      m.position.copy(A).add(B).multiplyScalar(0.5);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), B.clone().sub(A).normalize());
+      V.group.add(m);
+    });
+    if (showTet) { // 정사면체 면
+      const nb = D.atoms.filter(a => Math.abs(Math.hypot(a.p[0] - .25, a.p[1] - .25, a.p[2] - .25) - Math.sqrt(3) / 4) < 0.02).map(a => P3(a.p));
+      if (nb.length === 4) {
+        const g = new THREE.BufferGeometry(), idx = [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]], pos = [];
+        idx.forEach(t => t.forEach(q => pos.push(nb[q].x, nb[q].y, nb[q].z)));
+        g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
+        V.group.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: col('--bad'), transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false })));
+      }
+    }
+    // 정육면체 테두리
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) for (let k = 0; k < n; k++) {
+      const e = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({ color: col('--muted'), transparent: true, opacity: 0.5 }));
+      e.position.set(i + .5, k + .5, j + .5); V.group.add(e);
+    }
+    // 면과 방향
+    if (V.plane) {
+      const poly = { '100': [[0, 0, 0], [0, n, 0], [0, n, n], [0, 0, n]], '110': [[n, 0, 0], [0, n, 0], [0, n, n], [n, 0, n]], '111': [[n, 0, 0], [0, n, 0], [0, 0, n]] }[V.plane];
+      const shape = poly.map(P3), g = new THREE.BufferGeometry(), pos = [];
+      for (let q = 1; q < shape.length - 1; q++) [shape[0], shape[q], shape[q + 1]].forEach(v => pos.push(v.x, v.y, v.z));
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.computeVertexNormals();
+      V.group.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: col('--plane'), transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false })));
+      const dir = { '100': [1, 0, 0], '110': [1, 1, 0], '111': [1, 1, 1] }[V.plane], dl = Math.hypot(...dir);
+      const from = { '100': [0, n / 2, n / 2], '110': [n / 2, n / 2, n / 2], '111': [n / 3, n / 3, n / 3] }[V.plane];
+      const arr = new THREE.ArrowHelper(P3(dir.map(c => c / dl)), P3(from), 0.75 * n, col('--bad').getHex(), 0.13, 0.08);
+      V.group.add(arr);
+      lab(`[${V.plane.split('').join('')}] 방향 (면에 수직)`, P3(from.map((c, k) => c + dir[k] / dl * 0.85 * n)), css('--bad'));
+      lab(`(${V.plane}) 면`, P3(poly.reduce((s, p) => s.map((c, k) => c + p[k] / poly.length), [0, 0, 0])), css('--plane'));
+    }
+    lab('x [100]', P3([n + 0.18, 0, 0]), css('--muted')); lab('y [010]', P3([0, n + 0.22, 0]), css('--muted')); lab('z [001]', P3([0, 0, n + 0.15]), css('--muted'));
+    kick3();
+    if (!V.auto) kick3();
+  }
+  function lab(t, pos, color) { const el = document.createElement('div'); el.className = 'lb'; el.textContent = t; el.style.color = color; $('v3').append(el); V.labels.push({ el, pos }); }
+  $('n1').addEventListener('click', () => { V.n = 1; $('n1').setAttribute('aria-pressed', 'true'); $('n2').setAttribute('aria-pressed', 'false'); build3(); });
+  $('n2').addEventListener('click', () => { V.n = 2; $('n2').setAttribute('aria-pressed', 'true'); $('n1').setAttribute('aria-pressed', 'false'); build3(); });
+  $('chkFcc').addEventListener('change', build3); $('chkTet').addEventListener('change', build3);
+  document.querySelectorAll('.pcard').forEach(b => b.addEventListener('click', () => {
+    V.plane = V.plane === b.dataset.plane ? null : b.dataset.plane;
+    document.querySelectorAll('.pcard').forEach(x => x.setAttribute('aria-pressed', x.dataset.plane === V.plane));
+    $('v3cap').textContent = V.plane ? { '100': '(100)면: 정육면체 옆면 위의 원자 5개(주황). 웨이퍼 표면이 이 면입니다.', '110': '(110)면: 대각선 면 위의 원자들이 지그재그 줄을 이룹니다.', '111': '(111)면: 원자가 가장 빽빽한 삼각형 면. 미끄러짐과 적층 결함이 일어나는 면입니다.' }[V.plane] + ' 빨간 화살표는 면에 수직인 방향입니다.' : '드래그해서 돌려 보세요. 빨간 원자 하나가 이웃 4개(정사면체 꼭짓점)와 결합한 모습이 실리콘 결합의 기본 단위입니다.';
+    build3();
+    if (window.innerWidth < 960) $('v3').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+  }));
+
+  // =====================================================================
+  // 3장: [1-10] 투영 원자 그림
+  // =====================================================================
+  const A0 = 5.431, R2 = Math.SQRT2, R3 = Math.sqrt(3), P = A0 / R2, T = 2 * P;
+  const FW = 46, FH = 28.75, MG = 7;
+  const NH = [R2 / R3, 1 / R3], TH = [1 / R3, -R2 / R3];           // (111) 면 법선 / 면 방향 (u,w)
+  const SH = [A0 * R2 / 6, -A0 / 3];                                  // Shockley 부분전위 a/6[11-2] 투영 (u,w)
+  const qOf = (a) => a.u * NH[0] + a.w * NH[1], pOf = (a) => a.u * TH[0] + a.w * TH[1];
+  function genBase() {
+    const fcc = [[0, 0, 0], [0, .5, .5], [.5, 0, .5], [.5, .5, 0]], out = [], seen = new Set();
+    const kmin = Math.floor(-MG / A0) - 1, kmax = Math.ceil((FH + MG) / A0) + 1, n0 = Math.ceil((FW + 2 * MG) * R2 / A0) + 4;
+    for (let k = kmin; k <= kmax; k++) for (let i = -n0; i <= n0; i++) for (let j = -n0; j <= n0; j++) for (const f of fcc) for (const b of [0, .25]) {
+      const x = (i + f[0] + b) * A0, y = (j + f[1] + b) * A0, z = (k + f[2] + b) * A0;
+      const u = (x + y) / R2; if (u < -MG || u > FW + MG) continue;
+      const w = z; if (w < -MG || w > FH + MG) continue;
+      let t = ((x - y) / R2) % T; if (t < 0) t += T; if (t > T - 1e-6) t = 0;
+      const key = Math.round(u * 40) + '_' + Math.round(w * 40) + '_' + Math.round(t * 40);
+      if (seen.has(key)) continue; seen.add(key);
+      out.push({ u, w, t, el: 'Si', v: 1 });
+    }
+    return out;
+  }
+  const BASE = genBase();
+  const RANGE = { 'Si-Si': [2.0, 2.72], 'B-Si': [1.85, 2.75], 'P-Si': [1.9, 2.8], 'O-Si': [1.35, 1.98] };
+  const rangeOf = (a, b) => RANGE[[a, b].sort().join('-')];
+  function d3(a, b) { const du = a.u - b.u, dw = a.w - b.w; let dt = a.t - b.t; dt -= T * Math.round(dt / T); return Math.sqrt(du * du + dw * dw + dt * dt); }
+  function bondsOf(S) {
+    const G = 2.9, grid = new Map();
+    S.forEach((a, i) => { if (a.v < 0.35) return; const k = Math.floor(a.u / G) + ',' + Math.floor(a.w / G); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(i); });
+    const cnt = new Int8Array(S.length), pairs = [];
+    S.forEach((a, i) => {
+      if (a.v < 0.35) return;
+      const gx = Math.floor(a.u / G), gy = Math.floor(a.w / G);
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+        const L = grid.get((gx + dx) + ',' + (gy + dy)); if (!L) continue;
+        for (const j of L) {
+          if (j <= i) continue; const b = S[j], R = rangeOf(a.el, b.el); if (!R) continue;
+          const d = d3(a, b); if (d < R[0] || d > R[1]) continue;
+          pairs.push([i, j]); cnt[i]++; cnt[j]++;
+        }
+      }
+    });
+    return { cnt, pairs };
+  }
+  const inFrame = (a, m) => a.u > m && a.u < FW - m && a.w > m && a.w < FH - m;
+  function dangling(S, filter) {
+    const { cnt } = bondsOf(S); let n = 0;
+    S.forEach((a, i) => { if (a.v < 0.6 || a.amor || !(a.el === 'Si' || a.el === 'B' || a.el === 'P') || !inFrame(a, 2)) return; if (filter && !filter(a)) return; if (cnt[i] < 4) n++; });
+    return n;
+  }
+  const clone = (S) => S.map(a => Object.assign({}, a));
+  function nearest(u, w, front) {
+    let best = -1, bd = 1e9;
+    BASE.forEach((a, i) => { if (front && a.t >= P - 1e-6) return; const d = Math.hypot(a.u - u, a.w - w); if (d < bd) { bd = d; best = i; } });
+    return best;
+  }
+  function openSites(u0, w0, R, minSep) { // 격자 사이 빈 통로 자리 (3D 최소거리 최대)
+    const cand = [];
+    for (let u = u0 - R; u <= u0 + R; u += 0.5) for (let w = w0 - R; w <= w0 + R; w += 0.5) for (let t = 0; t < P; t += P / 6) {
+      let md = 1e9; for (const a of BASE) { if (Math.abs(a.u - u) > 3.2 || Math.abs(a.w - w) > 3.2) continue; md = Math.min(md, d3(a, { u, w, t })); }
+      if (md > 2.15) cand.push({ u, w, t, md });
+    }
+    cand.sort((x, y) => y.md - x.md);
+    const out = []; for (const c of cand) if (out.every(o => Math.hypot(o.u - c.u, o.w - c.w) > minSep)) out.push(c);
+    return out;
+  }
+  const CU = FW / 2, CW = FH / 2;
+
+  // ---------- 결함 정의 ----------
+  const DEFECTS = [
+    { key: 'vac', group: '점결함 (0차원 · 원자 1~2개)', name: '공공 (빈자리)', eng: 'Vacancy', tags: ['0차원', '원자 1개'],
+      why: ['결정 성장: 인상 속도가 빠르면 빈자리가 과잉으로 갇힘 (V-rich)', '이온 주입: 이온이 원자를 튕겨 내 빈자리를 남김', '고온 열처리: 온도가 높을수록 일정량이 저절로 생김'],
+      shape: '원자 하나가 빠진 자리입니다. 그 원자와 손잡고 있던 이웃 4개는 손 하나씩이 비게 되어(끊어진 결합) 전자를 붙잡는 함정이 됩니다.',
+      issue: '도펀트 확산을 빠르게 하고, 여러 개가 모이면 보이드(COP)로 자랍니다.' },
+    { key: 'int', group: '점결함 (0차원 · 원자 1~2개)', name: '격자간 원자', eng: 'Self-interstitial · <110> 아령형', tags: ['0차원', '원자 1개'],
+      why: ['이온 주입: 튕겨 나간 Si 원자가 격자 사이에 끼어듦', '산화: 산화막이 자랄 때 남는 Si 원자가 결정 속으로 밀려 들어감', '결정 성장의 I-rich 조건'],
+      shape: '실리콘 원자 하나가 정해진 자리가 아닌 곳에 끼어 있습니다. 가장 안정한 모양은 원자 둘이 한 자리를 나눠 쓰는 <b>&lt;110&gt; 아령(dumbbell)</b>입니다.',
+      issue: '붕소 확산을 비정상적으로 빠르게 하고(TED), 모이면 {311} 결함, 전위 루프, 적층 결함(OISF)이 됩니다.' },
+    { key: 'dop', group: '점결함 (0차원 · 원자 1~2개)', name: '도펀트 (B, P)', eng: 'Substitutional dopant', tags: ['0차원', '일부러 넣는 원자'],
+      why: ['이온 주입 후 활성화 열처리로 Si 자리에 들어감', '목적: 전기를 통하게 함 (p형 = B, n형 = P·As)'],
+      shape: 'Si 자리를 다른 원자가 대신 차지합니다. 결합 4개는 그대로라 끊어진 결합이 없습니다. B는 작아서 주변이 안쪽으로 당겨지고, P는 약간 커서 밀려납니다.',
+      issue: '결함이 아니라 반도체를 만드는 원자입니다. 다만 녹을 수 있는 양(고용도)을 넘으면 석출되거나 전위를 만듭니다.' },
+    { key: 'fe', group: '점결함 (0차원 · 원자 1~2개)', name: '금속 불순물 (Fe, Cu, Ni)', eng: 'Interstitial metal', tags: ['0차원', '오염'],
+      why: ['장비, 약품, 웨이퍼 이송 중 금속 오염', '고온에서 격자 사이 통로를 따라 매우 빠르게 확산 (수 mm까지)'],
+      shape: '격자 원자 사이의 빈 통로(정사면체 자리)에 끼어 있고 Si와 결합하지 않습니다.',
+      issue: '밴드갭 한가운데에 에너지 준위를 만들어 캐리어를 소멸시킵니다. 누설 전류가 늘어 DRAM 리텐션 불량, 게이트 산화막 불량의 원인입니다. 게터링으로 잡아 둡니다.' },
+    { key: 'oxy', group: '불순물이 모인 결함 (0 → 3차원)', name: '산소 · 산소 석출물 (BMD)', eng: 'Interstitial oxygen → SiOₓ precipitate', tags: ['0 → 3차원', '수 nm ~ µm'],
+      why: ['CZ 결정 성장 때 석영 도가니에서 산소가 녹아 들어옴 (약 10¹⁸ 개/cm³)', '소자 공정의 열처리 동안 넘치는 산소가 한곳에 모여 SiO₂로 석출'],
+      shape: '처음엔 Si–Si 결합 사이에 끼어 <b>Si–O–Si 다리</b>를 만듭니다. 모이면 결정이 아닌 SiOₓ 덩어리가 되고, 부피가 커서 주변 격자를 밀어내며 경계에 끊어진 결합이 생깁니다.',
+      issue: '소자 영역(표면 근처)에 있으면 누설 원인입니다. 기판 깊은 곳의 석출물(BMD)은 오히려 금속을 붙잡는 게터링 자리로 쓰고, 표면은 무결함층(DZ)으로 만듭니다.' },
+    { key: 'void', group: '불순물이 모인 결함 (0 → 3차원)', name: '보이드 (COP)', eng: 'Vacancy cluster · Crystal Originated Particle', tags: ['3차원', '0.1 ~ 0.2 µm'],
+      why: ['결정 성장 때 빈자리가 과잉(성장 속도 / 온도 기울기 비율, V/G)', '식으면서 빈자리들이 한곳에 모여 빈 공간이 됨'],
+      shape: '{111} 면으로 둘러싸인 팔면체 빈 공간입니다. 단면에서는 54.7° 기울어진 변을 가진 마름모로 보입니다. 안쪽 벽 원자들의 결합이 끊겨 있습니다(실제로는 얇은 산화막으로 덮임).',
+      issue: '웨이퍼 표면에 드러나면 게이트 산화막이 얇아져 신뢰성(GOI) 불량을 냅니다. 에피 웨이퍼나 고온 어닐 웨이퍼로 해결합니다.' },
+    { key: 'sf', group: '면 결함 (2차원)', name: '적층 결함 (SF · OISF)', eng: 'Intrinsic stacking fault on (111)', tags: ['2차원', '{111} 면', '표면과 54.7°'],
+      why: ['산화: 남는 격자간 원자들이 원판으로 모여 생김 (OISF)', '에피 성장 전 표면의 오염이나 파티클', '응력에 의한 부분전위의 미끄러짐'],
+      shape: '(111) 원자층은 A-B-C 순서로 쌓입니다. 이 순서가 한 번 어긋난 면이 적층 결함입니다. 면을 경계로 한쪽 결정이 (111) 면을 따라 1/6⟨112⟩만큼 미끄러진 것과 같습니다. 미끄러진 뒤에는 결합이 대부분 다시 이어져 에너지가 낮고, 그래서 큰 면으로 자랍니다.',
+      issue: 'p-n 접합을 가로지르면 누설 경로가 됩니다. 가장자리의 부분전위에 금속이 모여 문제를 키웁니다.' },
+    { key: 'disl', group: '선 결함 (1차원)', name: '전위 (Dislocation)', eng: 'Edge dislocation (그림은 90° Lomer 전위)', tags: ['1차원', '선', '{111} 면 위를 미끄러짐'],
+      why: ['열응력: 급가열·급냉, 웨이퍼 가장자리의 slip', '공정 응력: STI 트렌치, 질화막, 실리사이드 가장자리', '격자 크기가 다른 층(SiGe 등)을 키울 때', '격자간 원자 원판(루프)이 커지면서'],
+      shape: '원자면 하나가 반쪽만 끼어들어, 그 끝을 따라 이어진 선입니다. 선 위의 원자들은 결합이 끊겨 있습니다. 응력을 받으면 이 선이 {111} 면 위를 미끄러지며 움직입니다.',
+      issue: '접합이나 채널을 지나가면 누설·단락 경로가 됩니다. 금속이 달라붙으면(decoration) 더 나빠집니다.' },
+    { key: 'loop', group: '선 결함 (1차원)', name: '전위 루프 (Frank 루프)', eng: 'Extrinsic Frank dislocation loop (EOR)', tags: ['1차원 · 닫힌 선', '수 nm ~ 수십 nm', 'implant + 열처리'],
+      why: ['이온 주입 후 활성화 열처리: 남는 격자간 원자가 모임', '모이는 순서: 클러스터 → {311} 막대 → (111) 원판 = 루프', '비정질화 주입에서는 비정질/결정 경계 바로 아래(EOR)에 생김'],
+      shape: '(111) 면 사이에 원자 이중층 한 장이 끼어든 원판입니다. 원판 안쪽은 결합이 이어진 적층 결함(쌓임 순서가 하나 더 들어감)이고, 원판의 테두리가 전위선입니다.',
+      issue: '소스/드레인 접합 근처에 남으면 누설 전류를 늘립니다. 크기가 작아도 테두리의 끊어진 결합이 캐리어를 잡습니다.' },
+  ];
+
+  // ---------- 결함별 단계 생성 ----------
+  function build(key) {
+    const R = rnd(7), B = BASE, n = B.length;
+    const st = [], add = (name, desc, atoms, notes, extra) => st.push(Object.assign({ name, desc, atoms, notes: notes || [] }, extra || {}));
+    const N = (u, w, t, col) => ({ u, w, t, col: col || 'bad' });
+    const S0 = clone(B);
+    if (key === 'vac') {
+      const i = nearest(CU, CW, true), a = B[i];
+      const S1 = clone(B); S1[i].v = 0;
+      B.forEach((b, j) => { if (j !== i && d3(a, b) < 2.6) { S1[j].u += (a.u - b.u) * 0.06; S1[j].w += (a.w - b.w) * 0.06; } });
+      add('정상', '모든 원자가 이웃 4개와 결합해 있습니다.', S0);
+      add('원자 하나가 빠짐', '빈자리 주변 원자 4개(빨간 테두리)의 손이 하나씩 비었습니다. 이 빈손이 전자를 붙잡는 함정입니다. 흐리게 보이는 원자는 같은 위치의 한 층 뒤쪽 원자입니다.', S1, [N(a.u, a.w - 1.6, '빈자리')]);
+    } else if (key === 'int') {
+      const i = nearest(CU, CW, true), a = B[i];
+      const ex = { u: a.u + 1.15, w: a.w, t: a.t, el: 'Si', v: 0 };
+      const all = B.concat([ex]), s0 = clone(all), s1 = clone(all);
+      s0[n].w -= 9;
+      s1[i].u -= 1.15; s1[n].v = 1;
+      add('정상', '모든 원자가 제자리에 있습니다.', s0);
+      add('원자 하나가 끼어듦', '남는 Si 원자 하나가 들어와, 원래 원자와 한 자리를 나눠 씁니다. 두 원자가 [110] 방향으로 나란히 선 "아령" 모양이 됩니다. 결합 각도가 틀어져 두 원자와 주변 일부의 결합이 어긋납니다.', s1, [N(a.u, a.w - 1.7, '<110> 아령 (원자 2개가 한 자리)')]);
+    } else if (key === 'dop') {
+      const ib = nearest(CU - 9, CW, true), ip = nearest(CU + 9, CW, true);
+      const S1 = clone(B);
+      S1[ib].el = 'B'; S1[ip].el = 'P';
+      B.forEach((b, j) => {
+        if (j !== ib && d3(B[ib], b) < 2.6) { S1[j].u += (B[ib].u - b.u) * 0.08; S1[j].w += (B[ib].w - b.w) * 0.08; }
+        if (j !== ip && d3(B[ip], b) < 2.6) { S1[j].u -= (B[ip].u - b.u) * 0.03; S1[j].w -= (B[ip].w - b.w) * 0.03; }
+      });
+      add('정상', '순수한 실리콘입니다. 전자가 모두 결합에 묶여 전기가 잘 통하지 않습니다.', S0);
+      add('Si 자리를 대신 차지', '왼쪽 B는 바깥 전자가 3개라 결합 하나에 전자가 모자랍니다(정공 → p형). 오른쪽 P는 5개라 하나가 남습니다(자유 전자 → n형). 결합 4개는 모두 이어져 있어 끊어진 결합은 없습니다.', S1,
+        [N(B[ib].u, B[ib].w - 1.7, 'B — 전자 1개 부족', 'dopb'), N(B[ip].u, B[ip].w - 1.7, 'P — 전자 1개 남음', 'dopp')]);
+    } else if (key === 'fe') {
+      const site = openSites(CU, CW, 2.6, 3)[0];
+      const fe = { u: site.u, w: site.w, t: site.t, el: 'Fe', v: 1 };
+      const all = B.concat([fe]), s0 = clone(all), s1 = clone(all);
+      s0[n].u = site.u - 16; s0[n].w = site.w - 11; s0[n].v = 0;
+      add('정상', '깨끗한 결정입니다. 원자 사이에는 빈 통로가 있습니다.', s0);
+      add('금속이 통로로 들어옴', 'Fe 원자(보라)가 원자 사이의 빈 통로를 따라 빠르게 들어와 정사면체 자리에 머뭅니다. Si와 결합하지 않고, 밴드갭 한가운데 에너지 준위를 만들어 전자와 정공을 소멸시킵니다.', s1, [N(site.u, site.w - 1.8, 'Fe (격자 사이)', 'metal')]);
+    } else if (key === 'oxy') {
+      const { pairs } = bondsOf(B);
+      const cand = pairs.filter(([i, j]) => B[i].t < P - 1e-6 && B[j].t < P - 1e-6 && Math.abs(B[i].t - B[j].t) < 0.1 && inFrame(B[i], 4) && inFrame(B[j], 4));
+      const pick = []; for (let k = 0; k < 400 && pick.length < 7; k++) { const c = cand[Math.floor(R() * cand.length)]; const m = { u: (B[c[0]].u + B[c[1]].u) / 2, w: (B[c[0]].w + B[c[1]].w) / 2 }; if (Math.hypot(m.u - CU, m.w - CW) < 7) continue; if (pick.every(p => Math.hypot(p.m.u - m.u, p.m.w - m.w) > 6)) pick.push({ c, m }); }
+      const nO = 16, O = [];
+      for (let k = 0; k < nO; k++) O.push({ u: CU, w: CW, t: 0, el: 'O', v: 0 });
+      const all = B.concat(O), s0 = clone(all), s1 = clone(all), s2 = clone(all);
+      pick.forEach((pk, k) => {
+        const [i, j] = pk.c, a = B[i], b = B[j], du = b.u - a.u, dw = b.w - a.w, L = Math.hypot(du, dw), nu = -dw / L, nw = du / L;
+        s1[i].u -= du / L * 0.38; s1[i].w -= dw / L * 0.38; s1[j].u += du / L * 0.38; s1[j].w += dw / L * 0.38;
+        const o = s1[n + k]; o.u = pk.m.u + nu * 0.55; o.w = pk.m.w + nw * 0.55; o.t = a.t; o.v = 1;
+        s0[n + k].u = o.u; s0[n + k].w = o.w; s0[n + k].t = o.t;
+      });
+      for (let k = pick.length; k < nO; k++) { const t = R() * 6.283, d = Math.sqrt(R()) * 4.6; s0[n + k].u = s1[n + k].u = CU + Math.cos(t) * d; s0[n + k].w = s1[n + k].w = CW + Math.sin(t) * d * 0.8; }
+      const Rp = 5.6;
+      for (let q = 0; q < n; q++) {
+        const a = s2[q], d = Math.hypot(a.u - CU, a.w - CW);
+        if (d < Rp) { a.amor = true; a.u += (R() - 0.5) * 1.4; a.w += (R() - 0.5) * 1.4; if (R() < 0.35) a.v = 0; }
+        else { const sh = Math.min(1.0, 0.9 * Rp * Rp / (d * d)); a.u += (a.u - CU) / d * sh; a.w += (a.w - CW) / d * sh; }
+      }
+      for (let k = 0; k < nO; k++) { const t = R() * 6.283, d = Math.sqrt(R()) * (Rp - 0.6); const o = s2[n + k]; o.u = CU + Math.cos(t) * d; o.w = CW + Math.sin(t) * d; o.t = R() * T; o.v = 1; }
+      add('정상', '산소가 없는 결정입니다.', s0);
+      add('산소가 녹아 있음', '산소 원자(주황)가 Si–Si 결합 사이에 끼어 Si–O–Si 다리를 만듭니다. 결합이 모두 이어져 있어 아직 큰 문제는 없습니다.', s1, [N(pick[0] ? pick[0].m.u : CU, (pick[0] ? pick[0].m.w : CW) - 1.9, 'Si–O–Si', 'oxy')]);
+      add('열처리 → 석출물', '열처리 동안 산소가 한곳에 모여 결정이 아닌 SiOₓ 덩어리(흐린 원자들)가 됩니다. 부피가 커서 주변 격자를 밀어내고, 경계의 Si 원자들은 결합이 끊깁니다.', s2, [N(CU, CW - Rp - 1.4, 'SiOₓ 석출물 — 주변을 밀어냄')]);
+    } else if (key === 'void') {
+      const s1 = clone(B), s2 = clone(B), Rv = 6.4;
+      const front = B.map((a, i) => i).filter(i => B[i].t < P - 1e-6 && inFrame(B[i], 3));
+      for (let k = 0; k < 9; k++) s1[front[Math.floor(R() * front.length)]].v = 0;
+      s2.forEach(a => { if (Math.abs(a.w - CW) <= R2 * (Rv - Math.abs(a.u - CU))) a.v = 0; });
+      add('정상', '깨끗한 결정입니다.', S0);
+      add('빈자리가 많이 생김', '결정이 자랄 때 빈자리(공공)가 많이 갇혀 여기저기 흩어져 있습니다.', s1);
+      add('모여서 보이드', '빈자리들이 한곳에 모여 빈 공간이 됩니다. 변이 {111} 면(54.7°)이라 단면에서는 마름모입니다. 안쪽 벽 원자들의 결합이 끊겨 있습니다.', s2, [N(CU, CW - R2 * Rv - 1.3, '{111} 면으로 둘러싸인 빈 공간')]);
+    } else if (key === 'sf') {
+      const s0c = (R2 * CU + CW) / A0, base = Math.floor(s0c);
+      let best = null;
+      for (const off of [0.375, 0.875, -0.625, -0.125]) for (const sg of [1, -1]) {
+        const qc = (base + off) * A0 / R3, s = clone(B);
+        s.forEach(a => { if (qOf(a) > qc) { a.u += sg * SH[0]; a.w += sg * SH[1]; } });
+        const dn = dangling(s); if (!best || dn < best.dn) best = { dn, s, qc, sg };
+      }
+      const half = clone(B); half.forEach(a => { if (qOf(a) > best.qc) { a.u += best.sg * SH[0] * 0.5; a.w += best.sg * SH[1] * 0.5; } });
+      add('정상', '(111) 원자층이 A-B-C 순서로 쌓여 있습니다. 점선이 (111) 면입니다(표면과 54.7°).', S0, [], { trace: best.qc });
+      add('미끄러지는 중', '응력이나 남는 원자 때문에 점선 아래쪽 결정이 (111) 면을 따라 미끄러집니다. 중간 단계에서는 면을 가로지르는 결합이 끊깁니다.', half, [], { trace: best.qc });
+      add('적층 결함', '1/6⟨112⟩만큼 미끄러지면 결합이 다시 이어집니다. 원자는 모두 손을 잡았지만 면을 경계로 쌓임 순서가 하나 어긋났습니다(…ABCA│CABC…). 그래서 에너지가 낮고 넓게 자랄 수 있습니다.', best.s, [], { trace: best.qc });
+    } else if (key === 'disl') {
+      const site = openSites(CU, CW, 2.2, 2)[0], uc = site.u, wc = site.w, b = A0 / R2, nu = 0.28;
+      const field = (amp) => {
+        const s = clone(B);
+        s.forEach(a => {
+          const x = a.u - uc, y = -(a.w - wc), r2 = x * x + y * y + 0.05, th = Math.atan2(y, x);
+          const ux = b / (2 * Math.PI) * (th + x * y / (2 * (1 - nu) * r2));
+          const uy = -b / (2 * Math.PI) * ((1 - 2 * nu) / (4 * (1 - nu)) * Math.log(r2 / 100) + (x * x - y * y) / (4 * (1 - nu) * r2));
+          a.u += amp * ux; a.w -= amp * uy;
+        });
+        if (amp > 0.99) { // 코어 근처 겹치는 원자 정리
+          for (let i = 0; i < s.length; i++) for (let j = i + 1; j < s.length; j++) { if (!s[i].v || !s[j].v) continue; if (Math.abs(s[i].u - s[j].u) > 1.3 || Math.abs(s[i].w - s[j].w) > 1.3) continue; if (d3(s[i], s[j]) < 1.3) s[j].v = 0; }
+        }
+        return s;
+      };
+      add('정상', '완전한 결정입니다.', S0);
+      add('미끄러짐이 진행 중', '전단 응력을 받아 왼쪽부터 원자면들이 한 칸씩 어긋나며 미끄러져 들어옵니다. 미끄러진 부분과 아닌 부분의 경계에서 결합이 끊깁니다.', field(0.5));
+      add('전위 완성', '위쪽에 원자면 하나가 반쪽만 끼어든 상태가 됩니다. 그 끝(⊥)의 원자들은 결합이 끊겨 있고, 이 끝이 화면 안쪽으로 길게 이어진 선이 전위선입니다.', field(1), [N(uc, wc + 2.4, '⊥ 전위선 (화면 안쪽으로 이어짐)')]);
+    } else if (key === 'loop') {
+      const q0 = qOf({ u: CU, w: CW }), p0 = pOf({ u: CU, w: CW }), Rl = 10, bm = A0 / R3;
+      const s0c = (R2 * CU + CW) / A0, base = Math.floor(s0c);
+      const win = (dp) => 1 - ss((Math.abs(dp) - (Rl - 1.5)) / 3);
+      const disp = (s, qc, amp) => { for (let i = 0; i < n; i++) { const a = s[i], dq = qOf(B[i]) - qc, f = win(pOf(B[i]) - p0), dec = Math.min(1, Math.exp(-(Math.abs(dq) - bm / 2) / 7)), sg = dq > 0 ? 1 : -1; a.u += NH[0] * sg * bm / 2 * f * dec * amp; a.w += NH[1] * sg * bm / 2 * f * dec * amp; } };
+      let best = null;
+      for (const off of [0.375, 0.875]) for (const lat of [0, 1, -1]) {
+        const qc = (base + off) * A0 / R3;
+        const ins = B.filter(a => { const q = qOf(a); return q > qc && q <= qc + bm + 1e-6 && Math.abs(pOf(a) - p0) < Rl - 1.5; })
+          .map(a => ({ u: a.u - NH[0] * bm / 2 + lat * SH[0], w: a.w - NH[1] * bm / 2 + lat * SH[1], t: a.t, el: 'Si', v: 1, ins: true }));
+        const s = clone(B).concat(ins); disp(s, qc, 1);
+        const dn = dangling(s, (a) => Math.abs(pOf(a) - p0) < Rl - 4 && Math.abs(qOf(a) - qc) < 6);
+        if (!best || dn < best.dn) best = { dn, qc, ins };
+      }
+      const all = B.concat(best.ins.map(a => Object.assign({}, a))), m = best.ins.length;
+      const s0 = clone(all), s1 = clone(all), s2 = clone(all), s3 = clone(all);
+      const sites = openSites(CU, CW, 11, 2.6);
+      for (let k = 0; k < m; k++) {
+        const sp = sites[k % sites.length] || { u: CU, w: CW, t: 0 };
+        s0[n + k].u = s1[n + k].u = sp.u; s0[n + k].w = s1[n + k].w = sp.w; s0[n + k].t = s1[n + k].t = sp.t; s0[n + k].v = 0; s1[n + k].v = k < sites.length ? 1 : 0;
+        s2[n + k].v = 1;
+      }
+      const vacs = B.map((a, i) => i).filter(i => B[i].t < P - 1e-6 && inFrame(B[i], 4) && Math.abs(qOf(B[i]) - best.qc) > 5);
+      for (let k = 0; k < 3; k++) s1[vacs[Math.floor(R() * vacs.length)]].v = 0;
+      disp(s2, best.qc, 0.45); disp(s3, best.qc, 1);
+      const ends = [-1, 1].map(sg => ({ u: (p0 + sg * Rl) * TH[0] + best.qc * NH[0], w: (p0 + sg * Rl) * TH[1] + best.qc * NH[1] }));
+      add('정상', '완전한 결정입니다. 점선은 루프가 생길 (111) 면입니다.', s0, [], { trace: best.qc });
+      add('이온 주입 직후', '이온이 원자를 튕겨 내 남는 Si 원자(격자간 원자)들이 통로 곳곳에 흩어지고, 빈자리도 생깁니다.', s1, [N(CU, 2.2, '튕겨 나온 Si 원자들')], { trace: best.qc });
+      add('열처리 — 모이는 중', '열을 받으면 빈자리는 다시 채워지고, 남는 원자들은 (111) 면 사이로 모여 원판을 만들기 시작합니다.', s2, [], { trace: best.qc });
+      add('전위 루프 완성', '(111) 면 사이에 원자 이중층이 한 장 끼어든 원판이 됩니다. 원판 안쪽은 결합이 이어져 있고(쌓임 순서가 하나 더 들어간 적층 결함), 테두리(⊥)에서만 결합이 끊깁니다. 이 테두리가 원 모양으로 이어진 것이 루프입니다.', s3,
+        [N(ends[0].u, ends[0].w + 2.2, '⊥ 루프 테두리'), N(ends[1].u, ends[1].w - 1.8, '⊥ 루프 테두리')], { trace: best.qc, seg: { p0, Rl } });
+    }
+    return st;
+  }
+
+  // ---------- 그리기 ----------
+  const A = { key: null, st: null, t: 0, anim: null, raf: 0, cache: {} };
+  const COL = () => ({ Si: css('--si'), B: css('--dop-b'), P: css('--dop-p'), Fe: css('--metal'), O: css('--oxy') });
+  const RAD = { Si: 0.5, B: 0.4, P: 0.56, Fe: 0.62, O: 0.38 };
+  function render() {
+    const L = A.st; if (!L) return;
+    const cv = $('cvA'), { g, W, H } = fit(cv), sc = W / FW;
+    const ns = L.length, t = Math.min(Math.max(A.t, 0), ns - 1), k = ns === 1 ? 0 : Math.min(ns - 2, Math.floor(t)), f = ns === 1 ? 0 : ss(t - k);
+    const S0 = L[k].atoms, S1 = L[Math.min(k + 1, ns - 1)].atoms;
+    const cur = S0.map((a, i) => { const b = S1[i]; return { u: a.u + (b.u - a.u) * f, w: a.w + (b.w - a.w) * f, t: Math.abs(b.t - a.t) > P ? (f < 0.5 ? a.t : b.t) : a.t + (b.t - a.t) * f, v: a.v + (b.v - a.v) * f, el: f < 0.5 ? a.el : b.el, amor: f < 0.5 ? a.amor : b.amor }; });
+    const col = COL(), soft = css('--soft'), muted = css('--muted'), bad = css('--bad');
+    g.fillStyle = soft; g.fillRect(0, 0, W, H);
+    g.save(); g.beginPath(); g.rect(0, 0, W, H); g.clip();
+    const OFF = [0.42, -0.3];
+    const back = (a) => a.t >= P - 1e-6;
+    const X = (a) => (a.u + (back(a) ? OFF[0] : 0)) * sc, Y = (a) => (a.w + (back(a) ? OFF[1] : 0)) * sc;
+    // (111) 면 표시
+    const near = Math.round(t), stN = L[near];
+    if (stN.trace !== undefined) {
+      const qc = stN.trace, pts = [-40, 80].map(p => [(p * TH[0] + qc * NH[0]) * sc, (p * TH[1] + qc * NH[1]) * sc]);
+      g.strokeStyle = css('--plane'); g.setLineDash([7, 5]); g.lineWidth = 1.6; g.beginPath(); g.moveTo(...pts[0]); g.lineTo(...pts[1]); g.stroke(); g.setLineDash([]);
+      if (stN.seg && Math.abs(t - near) < 0.3) { const s = stN.seg, e = [-1, 1].map(sg => [((s.p0 + sg * s.Rl) * TH[0] + qc * NH[0]) * sc, ((s.p0 + sg * s.Rl) * TH[1] + qc * NH[1]) * sc]); g.strokeStyle = bad; g.globalAlpha = 0.2; g.lineWidth = 8; g.beginPath(); g.moveTo(...e[0]); g.lineTo(...e[1]); g.stroke(); g.globalAlpha = 1; }
+    }
+    const { cnt, pairs } = bondsOf(cur);
+    // 결합: 뒤 → 섞임 → 앞
+    for (const layer of [2, 1, 0]) {
+      for (const [i, j] of pairs) {
+        const a = cur[i], b = cur[j], lay = (back(a) ? 1 : 0) + (back(b) ? 1 : 0);
+        if (lay !== layer) continue;
+        g.strokeStyle = (a.el === 'O' || b.el === 'O') ? col.O : muted;
+        g.globalAlpha = Math.min(a.v, b.v) * (layer === 0 ? 0.85 : layer === 1 ? 0.45 : 0.22);
+        g.lineWidth = layer === 0 ? 2 : 1.2;
+        g.beginPath(); g.moveTo(X(a), Y(a)); g.lineTo(X(b), Y(b)); g.stroke();
+      }
+      if (layer === 2 || layer === 0) {
+        for (const a of cur) {
+          if (a.v < 0.02 || (layer === 2) !== back(a)) continue;
+          g.globalAlpha = a.v * (back(a) ? 0.32 : (a.amor ? 0.55 : 1));
+          g.fillStyle = col[a.el] || col.Si;
+          g.beginPath(); g.arc(X(a), Y(a), RAD[a.el] * sc * (back(a) ? 0.85 : 1), 0, 7); g.fill();
+        }
+      }
+    }
+    g.globalAlpha = 1;
+    // 끊어진 결합
+    let nd = 0;
+    if ($('chkDang').checked) {
+      cur.forEach((a, i) => {
+        if (a.v < 0.6 || a.amor || !(a.el === 'Si' || a.el === 'B' || a.el === 'P') || !inFrame(a, 1.2) || cnt[i] >= 4) return;
+        nd++;
+        g.strokeStyle = bad; g.globalAlpha = back(a) ? 0.5 : 1; g.lineWidth = 2.2;
+        g.beginPath(); g.arc(X(a), Y(a), RAD[a.el] * sc + 3.2, 0, 7); g.stroke();
+      });
+      g.globalAlpha = 1;
+    }
+    // 라벨
+    if (Math.abs(t - near) < 0.3) {
+      g.font = '600 12.5px ' + css('--f-body'); g.textAlign = 'center'; g.textBaseline = 'bottom';
+      const cmap = { bad, dopb: col.B, dopp: col.P, metal: col.Fe, oxy: col.O };
+      for (const nt of stN.notes) {
+        const w = g.measureText(nt.t).width + 10, x = Math.min(Math.max(nt.u * sc, w / 2 + 2), W - w / 2 - 2), y = Math.min(Math.max(nt.w * sc, 19), H - 2);
+        g.fillStyle = soft; g.globalAlpha = 0.9; g.fillRect(x - w / 2, y - 17, w, 18); g.globalAlpha = 1;
+        g.fillStyle = cmap[nt.col] || bad; g.fillText(nt.t, x, y);
+      }
+    }
+    // 축 표시
+    g.font = '11px ' + css('--f-mono'); g.fillStyle = muted; g.textAlign = 'left'; g.textBaseline = 'bottom';
+    g.fillText('[110] →', 6, H - 4);
+    g.save(); g.translate(W - 6, 6); g.textAlign = 'right'; g.textBaseline = 'top'; g.fillText('↓ 깊이 [001]', 0, 0); g.restore();
+    // 스케일 바 1 nm
+    g.strokeStyle = muted; g.lineWidth = 2; g.beginPath(); g.moveTo(W - 10 - 10 * sc, H - 10); g.lineTo(W - 10, H - 10); g.stroke();
+    g.textAlign = 'center'; g.fillText('1 nm', W - 10 - 5 * sc, H - 13);
+    g.restore();
+    // 동기화
+    $('slider').value = t;
+    document.querySelectorAll('#stages button').forEach((b, i) => b.setAttribute('aria-current', i === near ? 'true' : 'false'));
+    const sd = $('stepdesc'); if (sd) sd.textContent = stN.desc + ($('chkDang').checked && nd ? `  (끊어진 결합 ${nd}곳)` : '');
+  }
+  function animateTo(target, from) {
+    if (reduceMotion) { A.t = target; A.anim = null; render(); return; }
+    const t0 = from !== undefined ? from : A.t;
+    A.anim = { from: t0, to: target, start: performance.now(), dur: Math.max(450, Math.abs(target - t0) * 1500) };
+    if (!A.raf) A.raf = requestAnimationFrame(step);
+  }
+  function step(now) {
+    A.raf = 0; const a = A.anim; if (!a) return;
+    const u = Math.min(1, (now - a.start) / a.dur); A.t = a.from + (a.to - a.from) * u; render();
+    if (u < 1) A.raf = requestAnimationFrame(step); else { A.anim = null; $('play').textContent = '▶ 처음부터 재생'; }
+  }
+  function select(key) {
+    const d = DEFECTS.find(x => x.key === key) || DEFECTS[0];
+    A.key = d.key;
+    A.st = A.cache[d.key] || (A.cache[d.key] = build(d.key));
+    A.t = A.st.length - 1; A.anim = null;
+    document.querySelectorAll('.dbtn').forEach(b => b.setAttribute('aria-current', b.dataset.k === d.key ? 'true' : 'false'));
+    $('slider').max = A.st.length - 1;
+    const sb = $('stages'); sb.innerHTML = '';
+    A.st.forEach((s, i) => { const b = document.createElement('button'); b.textContent = (i + 1) + '. ' + s.name; b.addEventListener('click', () => animateTo(i)); sb.append(b); });
+    $('info').innerHTML = `<div class="tags">${d.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+      <div><h3 style="font-size:21px">${d.name}</h3><div class="muted mono" style="font-size:13px">${d.eng}</div></div>
+      <p class="stepdesc" id="stepdesc"></p>
+      <div class="blk"><span class="k">왜 생기나</span><ul>${d.why.map(x => `<li>${x}</li>`).join('')}</ul></div>
+      <div class="blk"><span class="k">어떤 모양인가</span><p>${d.shape}</p></div>
+      <div class="blk"><span class="k">반도체에서 무엇이 문제인가</span><p>${d.issue}</p></div>`;
+    try { history.replaceState(null, '', '#' + d.key); } catch (e) {}
+    render();
+  }
+  function renderList() {
+    const box = $('dlist'), groups = [...new Set(DEFECTS.map(d => d.group))];
+    box.innerHTML = '';
+    groups.forEach(gname => {
+      const gEl = document.createElement('div'); gEl.className = 'dgroup';
+      gEl.innerHTML = `<span class="gl">${gname}</span>`;
+      const row = document.createElement('div'); row.className = 'row';
+      DEFECTS.filter(d => d.group === gname).forEach(d => { const b = document.createElement('button'); b.className = 'dbtn'; b.dataset.k = d.key; b.textContent = d.name; b.addEventListener('click', () => select(d.key)); row.append(b); });
+      gEl.append(row); box.append(gEl);
+    });
+  }
+  $('slider').addEventListener('input', () => { A.anim = null; A.t = +$('slider').value; render(); });
+  $('play').addEventListener('click', () => { $('play').textContent = '▶ 재생 중'; animateTo(A.st.length - 1, 0); });
+  $('chkDang').addEventListener('change', render);
+
+  // 시작
+  renderList();
+  const h = (location.hash || '').slice(1);
+  select(DEFECTS.some(d => d.key === h) ? h : 'vac');
+  build3();
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { render(); }, 100); });
+  const rethemed = () => { render(); build3(); };
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', rethemed);
+  new MutationObserver(rethemed).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+})();
+</script>

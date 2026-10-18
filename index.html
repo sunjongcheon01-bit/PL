@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PL 결함 시뮬레이터</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>PL 결함 검출 시뮬레이터</h1>
+    <span class="sub">Photoluminescence 현미경 · Si / SiGe · 상온 300 K 고정</span>
+  </div>
+  <div class="top-actions">
+    <button id="btnSave" class="ghost">시나리오 저장</button>
+    <label class="ghost filebtn">불러오기<input id="fileLoad" type="file" accept=".json" hidden></label>
+  </div>
+</header>
+
+<main class="layout">
+  <aside class="side">
+    <nav class="tabs" id="sideTabs">
+      <button data-tab="t-struct" class="on">구조</button>
+      <button data-tab="t-defect">결함</button>
+      <button data-tab="t-optics">광학</button>
+      <button data-tab="t-noise">노이즈</button>
+      <button data-tab="t-phys">물리</button>
+    </nav>
+    <div class="side-body">
+      <section id="t-struct" class="pane on"></section>
+      <section id="t-defect" class="pane"></section>
+      <section id="t-optics" class="pane"></section>
+      <section id="t-noise" class="pane"></section>
+      <section id="t-phys" class="pane"></section>
+    </div>
+    <div class="runbox">
+      <button id="btnRun" class="primary">▶ 시뮬레이션 실행</button>
+      <div class="progress"><div id="progBar"></div></div>
+      <div id="progText" class="muted small">대기 중</div>
+    </div>
+  </aside>
+
+  <section class="work">
+    <nav class="tabs" id="workTabs">
+      <button data-tab="v-struct" class="on">구조 편집</button>
+      <button data-tab="v-image">2D 이미지</button>
+      <button data-tab="v-spec">스펙트럼</button>
+      <button data-tab="v-carrier">캐리어 분포</button>
+      <button data-tab="v-detect">검출 분석</button>
+      <button data-tab="v-valid">검증</button>
+      <button data-tab="v-guide">원리 설명</button>
+    </nav>
+
+    <div id="v-struct" class="view on">
+      <div class="toolbar" id="toolBar"></div>
+      <div class="struct-grid">
+        <div class="card">
+          <div class="card-h">단면도 (x–z) <span class="muted small">깊이축은 층마다 확대(비선형) · y 단면 <input id="ySlice" type="range" min="0" max="100" value="50"> <b id="ySliceV">50</b> µm</span></div>
+          <canvas id="cvCross" class="cv"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-h">평면도 (x–y) <span class="muted small">결함 도구 선택 후 클릭하여 배치 · 드래그로 이동</span></div>
+          <canvas id="cvTop" class="cv square"></canvas>
+        </div>
+      </div>
+      <div class="card" id="stackInfo"></div>
+    </div>
+
+    <div id="v-image" class="view">
+      <div class="toolbar">
+        <span>채널</span><span id="chButtons" class="seg"></span>
+        <span>표시</span>
+        <select id="imgKind">
+          <option value="noisy">측정 이미지 (노이즈 포함)</option>
+          <option value="ideal">이상 이미지 (노이즈 없음)</option>
+          <option value="contrast">결함 대비 맵 (기준 대비 %)</option>
+          <option value="peak">피크 파장 맵</option>
+        </select>
+        <select id="cmap"><option>gray</option><option>inferno</option><option>viridis</option><option>turbo</option></select>
+        <label><input type="checkbox" id="logScale"> 로그</label>
+        <label><input type="checkbox" id="overlay" checked> 결함 표시</label>
+        <button id="btnSpecMap" class="ghost">분광 맵 계산</button>
+      </div>
+      <div class="img-grid">
+        <div class="card"><canvas id="cvImg" class="cv square"></canvas><div id="imgInfo" class="muted small"></div></div>
+        <div class="card"><div class="card-h">라인 프로파일 (선택 픽셀 가로줄)</div><canvas id="cvProf" class="cv plot"></canvas>
+          <div class="card-h">선택 픽셀</div><div id="pixInfo" class="small"></div></div>
+      </div>
+    </div>
+
+    <div id="v-spec" class="view">
+      <div class="toolbar">
+        <label><input type="radio" name="specWhere" value="pixel" checked> 선택 픽셀(스팟)</label>
+        <label><input type="radio" name="specWhere" value="all"> 시야 전체</label>
+        <label><input type="checkbox" id="specIntr"> 내부 발광(탈출 전) 함께 표시</label>
+        <label><input type="checkbox" id="specLog" checked> 로그</label>
+      </div>
+      <div class="card"><canvas id="cvSpec" class="cv plot-lg"></canvas><div id="specInfo" class="small"></div></div>
+    </div>
+
+    <div id="v-carrier" class="view">
+      <div class="card"><div class="card-h">과잉 캐리어 Δn 단면 (x–z, 선택 y) — 로그 스케일</div><canvas id="cvDn" class="cv wide"></canvas></div>
+      <div class="card"><div class="card-h">깊이 프로파일 (선택 픽셀)</div><canvas id="cvDepth" class="cv plot"></canvas></div>
+    </div>
+
+    <div id="v-detect" class="view">
+      <div class="card"><div id="detectSummary" class="small"></div><div id="detectTable"></div></div>
+    </div>
+
+    <div id="v-valid" class="view">
+      <div class="toolbar"><button id="btnTests" class="primary">검증 테스트 실행</button><span class="muted small">해석해·문헌값과 비교합니다 (작은 격자, 수 초).</span></div>
+      <div class="card"><div id="testOut" class="small mono"></div></div>
+      <div class="card"><canvas id="cvTest" class="cv plot"></canvas></div>
+    </div>
+
+    <div id="v-guide" class="view"><div class="card guide" id="guide"></div></div>
+  </section>
+</main>
+
+<script src="js/materials.js"></script>
+<script src="js/structure.js"></script>
+<script src="js/defects.js"></script>
+<script src="js/optics.js"></script>
+<script src="js/noise.js"></script>
+<script src="js/solver.js"></script>
+<script src="js/simulate.js"></script>
+<script src="js/render.js"></script>
+<script src="js/tests.js"></script>
+<script src="js/guide.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>

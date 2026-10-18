@@ -1,0 +1,1111 @@
+<title>PL 결함 아틀라스</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: 도감(atlas) 판형 — 왼쪽 결함 색인, 오른쪽 한 장의 '판(plate)'에 원자 모식도·단면·PL 이미지·스펙트럼, 아래 한눈 비교표 */
+:root {
+  --paper: #f3f5f8; --panel: #ffffff; --ink: #141821; --muted: #5a6373; --line: #d8dde5; --soft: #e9edf3;
+  --accent: #c42f4c;            /* 적외선 발광(D-line) */
+  --bb: #2b67cf; --sige: #c47a1f; --dline: #c42f4c; --cluster: #7d4bc9;
+  --good: #1f8a52; --bad: #2b67cf;
+  --f-display: "IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e1117; --panel: #151a22; --ink: #e7eaf0; --muted: #98a1b1; --line: #2a313d; --soft: #1d232d;
+    --accent: #f06882; --bb: #6b9ff2; --sige: #e3a654; --dline: #f06882; --cluster: #b28cf2; --good: #4cc489; --bad: #6b9ff2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e1117; --panel: #151a22; --ink: #e7eaf0; --muted: #98a1b1; --line: #2a313d; --soft: #1d232d;
+  --accent: #f06882; --bb: #6b9ff2; --sige: #e3a654; --dline: #f06882; --cluster: #b28cf2; --good: #4cc489; --bad: #6b9ff2;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.6 var(--f-body); margin: 0; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 56px; display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(26px, 3.4vw, 38px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 22px; font-weight: 700; }
+h3 { font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+p { margin: 0; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+
+/* 머리 */
+.head { display: grid; gap: 14px; }
+.head .lede { max-width: 72ch; color: var(--muted); }
+.spec-strip { display: flex; flex-wrap: wrap; gap: 6px 18px; font: 12.5px var(--f-mono); color: var(--muted); }
+.spec-strip b { color: var(--ink); font-weight: 500; }
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow: hidden; }
+.step { padding: 14px 16px; border-left: 1px solid var(--line); display: grid; gap: 4px; min-width: 0; }
+.step:first-child { border-left: none; }
+.step .k { font: 500 12px var(--f-mono); color: var(--accent); }
+.step b { font-size: 15px; }
+.step p { font-size: 13.5px; color: var(--muted); }
+
+/* 컨트롤 */
+.controls { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); }
+.seg button { border: 0; background: none; color: var(--muted); padding: 7px 13px; font: 500 13.5px var(--f-body); cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.seg button:focus-visible, .idx button:focus-visible, .chk:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ctl-label { font: 12px var(--f-mono); color: var(--muted); letter-spacing: 0.04em; }
+.chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13.5px; color: var(--muted); cursor: pointer; }
+
+/* 아틀라스 본문 */
+.atlas { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 20px; align-items: start; }
+.idx { display: grid; gap: 2px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+.idx button { display: grid; grid-template-columns: 26px 1fr auto; gap: 8px; align-items: center; text-align: left; border: 1px solid transparent; background: none; color: var(--ink); padding: 8px 10px; border-radius: 8px; cursor: pointer; font: 14px var(--f-body); }
+.idx button:hover { background: var(--soft); }
+.idx button[aria-current="true"] { background: var(--panel); border-color: var(--line); box-shadow: 0 1px 0 var(--line); }
+.idx .glyph { font: 500 11px var(--f-mono); color: var(--muted); border: 1px solid var(--line); border-radius: 5px; text-align: center; padding: 1px 0; }
+.idx .na { font: 11px var(--f-mono); color: var(--muted); }
+.idx button[disabled] { opacity: 0.45; cursor: not-allowed; }
+
+.plate { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 22px; display: grid; gap: 22px; min-width: 0; }
+.plate-head { display: grid; gap: 8px; }
+.plate-head .eng { font: 13px var(--f-mono); color: var(--muted); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { font: 12px var(--f-mono); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; color: var(--muted); }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.facts > div { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.facts ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 14px; }
+.facts p { font-size: 14px; }
+.verdict { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--soft); border-radius: 0 8px 8px 0; font-size: 14.5px; }
+.verdict b { color: var(--accent); }
+
+.figs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.fig { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.fig canvas { width: 100%; display: block; border-radius: 8px; }
+.fig .cap { font-size: 12.5px; color: var(--muted); }
+.cv-lattice { aspect-ratio: 16 / 10; background: var(--soft); }
+.cv-cross { aspect-ratio: 16 / 10; background: var(--soft); }
+.pl-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.pl-cell { display: grid; gap: 4px; min-width: 0; }
+.pl-cell canvas { aspect-ratio: 1; image-rendering: pixelated; border-radius: 6px; background: #000; }
+.pl-cell .lab { display: flex; justify-content: space-between; gap: 6px; font: 12px var(--f-mono); }
+.pl-cell .lab .v { color: var(--muted); }
+.cbar { display: flex; align-items: center; gap: 8px; font: 11.5px var(--f-mono); color: var(--muted); }
+.cbar canvas { flex: 1; height: 10px; border-radius: 3px; min-width: 0; }
+.spec-fig { grid-column: 1 / -1; }
+.cv-spec { aspect-ratio: 21 / 8; background: var(--panel); border: 1px solid var(--line); }
+.readout { font: 12.5px var(--f-mono); color: var(--muted); min-height: 1.6em; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted); }
+.legend i { display: inline-block; width: 18px; height: 0; border-top: 2px solid; vertical-align: middle; margin-right: 5px; }
+
+/* 원자 모식도 컨트롤 */
+.lat-view { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.viewtag { font: 500 12px var(--f-mono); color: var(--ink); border: 1px dashed var(--muted); border-radius: 6px; padding: 2px 8px; }
+.seg.mini button { padding: 3px 10px; font-size: 12.5px; }
+.analogy { font-size: 13.5px; background: var(--soft); border-radius: 8px; padding: 8px 12px; }
+.analogy b { color: var(--accent); margin-right: 6px; font-size: 12px; letter-spacing: 0.04em; }
+.lat-ctl { display: flex; gap: 10px; align-items: center; }
+.lat-ctl input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
+.play { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 5px 11px; font: 500 13px var(--f-body); cursor: pointer; white-space: nowrap; }
+.play:disabled, .lat-ctl input:disabled { opacity: 0.4; cursor: default; }
+.stagebar { display: flex; flex-wrap: wrap; gap: 6px; }
+.stagebar button { border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 3px 11px; font: 12.5px var(--f-body); cursor: pointer; }
+.stagebar button[aria-current="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.play:focus-visible, .stagebar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lat-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); align-items: center; }
+.lat-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.lat-legend i.ring { background: none; border: 2px solid var(--accent); }
+.lat-legend i.dash { background: none; border: 1.5px dashed var(--muted); }
+
+/* 3D */
+.v3-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; }
+.v3-head .seg button { padding: 5px 10px; font-size: 12.5px; }
+.v3 { position: relative; width: 100%; aspect-ratio: 21 / 9; min-height: 260px; max-height: 70vh; border-radius: 8px; background: var(--soft); overflow: hidden; touch-action: none; cursor: grab; }
+.v3:active { cursor: grabbing; }
+.v3 canvas { display: block; width: 100%; height: 100%; }
+.v3 .lb { position: absolute; transform: translate(-50%, -50%); font: 500 11.5px var(--f-mono); white-space: nowrap; pointer-events: none; padding: 1px 6px; border-radius: 4px; background: color-mix(in srgb, var(--panel) 78%, transparent); }
+.v3 .lb.def { font: 600 12.5px var(--f-body); }
+.v3 .msg { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 13.5px; padding: 16px; text-align: center; }
+@media (max-width: 520px) { .v3 { aspect-ratio: 4 / 3; } }
+
+/* 비교표 */
+.matrix-wrap { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
+th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { font: 600 12px var(--f-mono); letter-spacing: 0.04em; color: var(--muted); background: var(--soft); }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: var(--soft); }
+tr[aria-current="true"] td { background: var(--soft); }
+.chip { display: inline-flex; align-items: center; gap: 4px; font: 500 12.5px var(--f-mono); padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+.chip.up { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.chip.down { color: var(--bb); background: color-mix(in srgb, var(--bb) 12%, transparent); }
+.chip.none { color: var(--muted); background: var(--soft); }
+.foot { font-size: 12.5px; color: var(--muted); display: grid; gap: 6px; max-width: 110ch; }
+
+@media (max-width: 980px) {
+  .atlas { grid-template-columns: 1fr; }
+  .idx { position: static; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .idx button { grid-template-columns: 24px 1fr; } .idx .na { display: none; }
+  .facts { grid-template-columns: 1fr; }
+  .figs { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .step:nth-child(3) { border-left: none; } .step:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 520px) {
+  .plate { padding: 14px; }
+  .steps { grid-template-columns: 1fr; } .step { border-left: none; border-top: 1px solid var(--line); } .step:first-child { border-top: none; }
+  .cv-spec { aspect-ratio: 4 / 3; }
+}
+@media (prefers-reduced-motion: no-preference) { .plate { transition: opacity .15s; } }
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <h3>Photoluminescence 결함 검사 · 상온 300 K</h3>
+    <h1>PL 결함 아틀라스</h1>
+    <p class="lede">Si와 SiGe 적층에서 주요 격자 결함이 왜 생기고, 어떻게 생겼으며, PL 현미경에서 정상 대비 어떤 이미지와 스펙트럼으로 나타나는지 한 장씩 정리했습니다. 이미지와 스펙트럼은 물리 기반 시뮬레이션(3D 캐리어 확산 + 발광 + 광학계) 결과입니다.</p>
+    <div class="spec-strip">
+      <span>여기 <b>532 nm · 100 W/cm²</b></span><span>대물 <b>NA 0.5</b></span><span>검출 <b>InGaAs 900–1700 nm</b></span>
+      <span>시야 <b>48 × 48 µm</b></span><span>필터 <b>BB 1050–1250 · SiGe 1250–1400 · LP1400</b></span>
+    </div>
+  </header>
+
+  <section class="steps" aria-label="PL 원리">
+    <div class="step"><span class="k">① 여기</span><b>빛 흡수 → 전자·정공 생성</b><p>532 nm 빛은 Si에서 약 1.3 µm 깊이까지 흡수됩니다.</p></div>
+    <div class="step"><span class="k">② 확산</span><b>캐리어가 퍼짐</b><p>수명 동안 확산 길이 L = √(Dτ) 만큼 이동합니다. Si 기판에서 수십~수백 µm.</p></div>
+    <div class="step"><span class="k">③ 재결합</span><b>결함이 캐리어를 소멸</b><p>결함 주변은 빛 없이 재결합(SRH)하므로 밴드간 발광이 줄어 어둡게 보입니다.</p></div>
+    <div class="step"><span class="k">④ 발광</span><b>결함 고유의 빛</b><p>전위는 D-line(D1 ≈ 1.55 µm)을 내므로, 긴 파장 필터에서는 밝은 점이 됩니다.</p></div>
+  </section>
+
+  <div class="controls">
+    <span class="ctl-label">적층</span>
+    <div class="seg" role="group" aria-label="적층 구조">
+      <button id="stSi" data-stack="Si" aria-pressed="false">Si 기판</button>
+      <button id="stSiGe" data-stack="SiGe" aria-pressed="true">Si cap / SiGe 25% / Si</button>
+    </div>
+    <span class="ctl-label">PL 이미지</span>
+    <div class="seg" role="group" aria-label="이미지 표시">
+      <button id="vmRatio" data-view="ratio" aria-pressed="true">정상 대비 맵</button>
+      <button id="vmCam" data-view="cam" aria-pressed="false">카메라 모습</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="chkComp" checked> 스펙트럼 성분 표시</label>
+    <label class="chk"><input type="checkbox" id="chkLog" checked> 로그 축</label>
+    <span class="muted" style="font-size:12.5px">← → 키로 결함 넘기기</span>
+  </div>
+
+  <section class="atlas">
+    <nav class="idx" id="idx" aria-label="결함 목록"></nav>
+    <article class="plate" id="plate" aria-live="polite">
+      <div class="plate-head">
+        <div class="tags" id="pTags"></div>
+        <h2 id="pName"></h2>
+        <div class="eng" id="pEng"></div>
+      </div>
+      <div class="facts">
+        <div><h3>발생 원인</h3><ul id="pCause"></ul></div>
+        <div><h3>생긴 모양</h3><p id="pShape"></p></div>
+        <div><h3>PL 신호가 생기는 이유</h3><p id="pMech"></p></div>
+      </div>
+      <p class="verdict" id="pVerdict"></p>
+      <div class="figs">
+        <figure class="fig" style="margin:0">
+          <h3>원자 배열 — 정상에서 결함까지</h3>
+          <div class="lat-view">
+            <span class="viewtag" id="latView"></span>
+            <div class="seg mini" id="latViewSeg" role="group" aria-label="보는 방향" hidden>
+              <button data-ev="plan" aria-pressed="true">위에서</button>
+              <button data-ev="side" aria-pressed="false">옆에서</button>
+            </div>
+          </div>
+          <p class="analogy" id="latAnalogy"></p>
+          <canvas id="cvLat" class="cv-lattice" aria-label="원자 배열 모식도"></canvas>
+          <div class="lat-ctl">
+            <button id="latPlay" class="play">▶ 처음부터 재생</button>
+            <input type="range" id="latT" min="0" max="1" step="0.01" value="1" aria-label="변화 단계">
+          </div>
+          <div class="stagebar" id="latStages" role="group" aria-label="단계 선택"></div>
+          <figcaption class="cap" id="capLat"></figcaption>
+          <div class="lat-legend">
+            <span><i style="background:var(--bb)"></i>Si</span><span><i style="background:var(--sige)"></i>Ge</span><span><i style="background:var(--cluster)"></i>산소</span><span><i style="background:var(--accent)"></i>금속 불순물</span>
+            <span><i class="ring"></i>끊어진 결합 = 캐리어를 잡는 곳</span><span><i class="dash"></i>빈자리</span>
+            <label class="chk"><input type="checkbox" id="latDangle" checked> 끊어진 결합 표시</label>
+          </div>
+        </figure>
+        <figure class="fig" style="margin:0">
+          <h3>단면 위치 (깊이 √ 스케일)</h3>
+          <canvas id="cvCross" class="cv-cross" aria-label="단면 모식도"></canvas>
+          <figcaption class="cap" id="capCross"></figcaption>
+        </figure>
+        <figure class="fig spec-fig" style="margin:0">
+          <div class="v3-head">
+            <h3>3D 결함 형상</h3>
+            <div class="seg" role="group" aria-label="3D 보기 방향">
+              <button id="v3Auto" aria-pressed="true">자동 회전</button>
+              <button id="v3Iso">비스듬히</button>
+              <button id="v3Top">위에서 (PL 이미지 방향)</button>
+              <button id="v3Side">옆에서 (단면)</button>
+            </div>
+          </div>
+          <div class="v3" id="v3" aria-label="3D 결함 형상 — 드래그하여 회전"></div>
+          <figcaption class="cap" id="cap3D">드래그해서 돌려 보세요. 깊이축은 √ 스케일이고, 1 µm보다 작은 결함은 확대해서 그렸습니다.</figcaption>
+        </figure>
+        <figure class="fig spec-fig" style="margin:0">
+          <h3>예상 PL 이미지 — 필터 채널별 (시뮬레이션)</h3>
+          <div class="pl-row" id="plRow"></div>
+          <div class="cbar" id="cbar"></div>
+          <figcaption class="cap" id="capPL"></figcaption>
+        </figure>
+        <figure class="fig spec-fig" style="margin:0">
+          <h3>스펙트럼 — 정상 vs 결함 (결함 위치 3 × 3 µm)</h3>
+          <canvas id="cvSpec" class="cv-spec" aria-label="스펙트럼 그래프"></canvas>
+          <div class="legend" id="legend"></div>
+          <div class="readout" id="readout">그래프 위에 마우스를 올리면 파장별 값을 보여줍니다.</div>
+        </figure>
+      </div>
+    </article>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>한눈에 보기 — 채널별 예상 대비</h2>
+    <p class="muted" style="max-width:80ch">결함 바로 위 픽셀의 신호를 주변 배경과 비교한 국부 대비입니다. 단일 픽셀 SNR이 3 미만이면 "검출 어려움"으로 표시합니다(샷·다크·리드 노이즈 포함). 행을 누르면 위 판으로 이동합니다.</p>
+    <div class="matrix-wrap"><table id="matrix"></table></div>
+  </section>
+
+  <footer class="foot">
+    <p><b>시뮬레이션 조건.</b> 결함 1개를 시야 중앙에 두고 계산했습니다. Si 기판은 p형 1e15 cm⁻³, τ = 10 µs, SiGe 구조는 Si cap 10 nm / Si₀.₇₅Ge₀.₂₅ 50 nm(strained) / Si 기판입니다. 결함의 재결합 세기와 D-line 발광 비율은 문헌 범위의 가정값이며 실측 보정 전입니다.</p>
+    <p><b>모델.</b> 3D 정상상태 확산–재결합(고주입·SiGe 캐리어 가둠 포함), 일반화 Planck 발광, 박막 반사·자기흡수·NA 수집, 깊이별 디포커스 PSF. 상대 대비와 스펙트럼 모양은 신뢰할 수 있고, 절대 신호 크기는 장비 사양에 따라 달라집니다.</p>
+  </footer>
+</div>
+
+<script type="application/json" id="simdata">/*__DATA__*/</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function () {
+  'use strict';
+  const DATA = JSON.parse(document.getElementById('simdata').textContent);
+  const $ = (id) => document.getElementById(id);
+  const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+  // ---------------- 결함 설명 ----------------
+  const DEF = [
+    { key: 'normal', glyph: '—', name: '정상 (기준)', eng: 'Defect-free reference', tags: ['기준'],
+      cause: ['결함 없는 단결정 (다이아몬드 격자)'],
+      shape: '원자가 규칙적으로 배열된 완전 결정입니다. 표면과 계면만이 캐리어를 잃는 곳입니다.',
+      mech: '흡수된 빛이 만든 캐리어가 넓게 퍼진 뒤 일부가 밴드간 재결합으로 빛을 냅니다. Si는 약 1125 nm, SiGe 25%는 약 1360 nm에서 넓은 피크를 냅니다.',
+      verdict: '모든 결함 이미지는 이 상태의 신호를 1로 놓고 비교합니다. Si 기판에서 LP1400 채널은 거의 깜깜합니다(밴드간 발광 꼬리만 남음).',
+      lattice: 'perfect', depth: null },
+    { key: 'point_region', glyph: '0D', name: '점결함 · 금속 오염', eng: 'Point defects / metal contamination (Fe, Cu, Ni)', tags: ['0차원', '원자 수준', '영역 µm–mm'],
+      cause: ['공정 장비·약품의 금속 오염 (Fe, Cu, Ni)', '이온 주입 손상: 공공(V)과 격자간 원자(I)', '결정 성장 중 생기는 고유 점결함과 복합체(V–O, Fe–B)'],
+      shape: '원자 하나가 빠지거나(공공), 격자 사이에 끼거나(격자간 원자), 불순물이 자리를 차지한 상태입니다. 하나하나는 보이지 않고, 많이 모인 영역이 수명이 짧은 얼룩으로 나타납니다.',
+      mech: '밴드갭 안에 깊은 에너지 준위를 만들어 캐리어를 빛 없이 소멸시킵니다(SRH). 스스로 빛을 내지 않으므로 새 피크는 없고 세기만 줄어듭니다. SiGe 구조에서는 SiGe 피크가 조금 더 많이 줄어듭니다.',
+      verdict: '<b>모든 채널에서 같은 비율로 흐리게 어두워집니다.</b> 확산 길이가 긴 Si 기판에서는 수 µm 크기 영역이 거의 안 보이고, 영역이 확산 길이만큼 커져야 뚜렷해집니다.',
+      lattice: 'point', depth: { z: 2, size: 8, kind: 'region' } },
+    { key: 'loop', glyph: '1D', name: '전위 루프', eng: 'Dislocation loop (EOR loop)', tags: ['1차원 · 닫힌 선', '수 nm–수백 nm', 'implant + 열처리'],
+      cause: ['이온 주입 후 열처리: 남는 격자간 원자 → 클러스터 → {311} → 루프', '비정질화 주입의 비정질/결정 경계 아래 EOR(End-of-Range) 루프', '산화로 주입된 격자간 원자, 석출물의 펀치아웃'],
+      shape: '격자간 원자들이 한 원자면에 원판처럼 모여, 원자면 한 장이 끼어든 모양입니다. 그 원판의 둘레가 닫힌 고리 모양의 전위선입니다. 깊이는 이온 투사거리(Rp) 근처입니다.',
+      mech: '전위선의 준위가 캐리어를 잡지만 크기가 작아 밴드간 발광은 거의 줄지 않습니다. 대신 전위선 자체가 D1 빛(0.80 eV, 약 1.55 µm)을 냅니다.',
+      verdict: '<b>BB에서는 거의 안 보이고, LP1400에서 밝은 점</b>으로 나타납니다. 점 크기는 실제 결함(100 nm)이 아니라 광학계 해상도(약 1 µm)입니다. implant 후 열처리에서 생기는 밝은 dot의 가장 유력한 후보입니다.',
+      lattice: 'loop', depth: { z: 1, size: 0.1, kind: 'loop' } },
+    { key: 'threading', glyph: '1D', name: '관통 전위 (TD)', eng: 'Threading dislocation — 밀도 지표 TDD (cm⁻²)', tags: ['1차원 · 열린 선', '표면까지 관통', 'TDD'],
+      cause: ['격자 불일치 에피층이 완화될 때 misfit 전위의 끝이 표면으로 올라옴', '기판에 있던 전위가 에피층으로 전파', '열응력에 의한 slip'],
+      shape: '결정 깊은 곳에서 표면까지 이어진 전위선입니다. 위에서 보면 점, 단면에서 보면 선입니다. 단위 면적당 개수를 TDD로 관리합니다.',
+      mech: '선을 따라 캐리어를 잃어 주변 밴드간 발광이 확산 길이 범위로 약하게 줄고, 선 자체는 D1·D2 빛을 냅니다.',
+      verdict: '<b>BB에서 약한 어두운 점, LP1400에서 밝은 점.</b> 표면에 닿아 있어 같은 크기의 깊은 결함보다 대비가 큽니다.',
+      lattice: 'edge', depth: { z: 0, size: 8, kind: 'vline' } },
+    { key: 'misfit', glyph: '1D', name: 'Misfit 전위', eng: 'Misfit dislocation — cross-hatch', tags: ['1차원 · 계면 선', '<110> 직교 격자', 'SiGe 전용'], sigeOnly: true,
+      cause: ['SiGe 두께가 임계 두께를 넘음 (x = 0.25: Matthews–Blakeslee 약 9 nm, People–Bean 약 120 nm)', '준안정층이 열처리 중 변형을 풀며 완화', 'Ge 농도가 높을수록 임계 두께가 급격히 얇아짐'],
+      shape: 'SiGe/Si 계면을 따라 [110], [1-10] 두 방향으로 놓인 직선입니다. 여러 개가 겹치면 바둑판 같은 격자무늬(cross-hatch)가 됩니다.',
+      mech: '계면 바로 위 SiGe 층의 캐리어를 직접 잃게 해 SiGe 발광이 크게 줄고, 선이 D-line을 냅니다. 선이 시야를 가로지를 만큼 길어서 시야 전체의 신호도 함께 낮아집니다.',
+      verdict: '<b>BB·SiGe 대역에서 어두운 선, LP1400에서 밝은 선.</b> 직선과 직교 패턴이 다른 결함과 구분되는 가장 확실한 특징입니다. 밀도가 높으면 시야 전체의 SiGe 발광이 약해집니다.',
+      lattice: 'misfit', depth: { z: 0.062, size: 48, kind: 'hline' } },
+    { key: 'stacking_fault', glyph: '2D', name: '적층 결함 (SF)', eng: 'Stacking fault on {111}', tags: ['2차원 · 면', '{111}면 54.7°', '경계 부분전위'],
+      cause: ['에피 성장 전 표면 오염·파티클', '산화로 인한 격자간 원자 과잉 (OISF)', '격자간 원자 원판이 커지며 면결함으로 성장'],
+      shape: '원자층 쌓임 순서(ABCABC)가 한 번 어긋난 면입니다. {111}면을 따라 54.7° 기울어져 있어, 위에서 보면 선이나 삼각형(사다리꼴)으로 보입니다. 가장자리는 부분전위입니다.',
+      mech: '면 자체의 재결합은 약하고, 가장자리 부분전위가 캐리어를 잃게 하며 D-line을 냅니다.',
+      verdict: '<b>선·삼각형 모양 패턴</b>이 핵심입니다. BB에서는 약하게 어둡고, LP1400에서는 가장자리를 따라 밝게 나타납니다.',
+      lattice: 'sf', depth: { z: 0, size: 8, kind: 'sf' } },
+    { key: 'precipitate', glyph: '3D', name: '산소 석출물 (BMD)', eng: 'Oxygen precipitate / Bulk Micro Defect', tags: ['3차원 · 입자', '수십 nm–µm', 'CZ 웨이퍼'],
+      cause: ['CZ 웨이퍼에 녹아 있던 과포화 산소가 열처리 중 SiOₓ로 석출', '금속을 잡기 위해 일부러 만드는 게터링 사이트', '부피 팽창으로 주변에 펀치아웃 전위가 생기기도 함'],
+      shape: '결정 안에 박힌 비정질 SiOₓ 알갱이입니다. 주변 격자를 밀어내 응력장이 생깁니다. 보통 표면 근처(무결함층, DZ) 아래 기판 깊은 곳에 분포합니다.',
+      mech: '알갱이 표면에서 캐리어를 잃습니다. 재결합 세기가 표면적(∝ 지름²)에 비례해 크기에 크게 좌우됩니다. 펀치아웃 전위가 있으면 약한 D-line을 냅니다.',
+      verdict: '<b>작고 깊을수록 BB에서는 거의 안 보입니다.</b> 이 예시(0.5 µm, 깊이 3 µm)는 LP1400의 D-line으로만 겨우 드러납니다.',
+      lattice: 'precip', depth: { z: 3, size: 0.5, kind: 'sphere' } },
+    { key: 'void', glyph: '3D', name: '보이드 (COP)', eng: 'Void / Crystal Originated Particle', tags: ['3차원 · 빈 공간', '0.1–0.3 µm 팔면체', 'CZ 성장'],
+      cause: ['CZ 결정 성장 중 공공(V)이 과잉인 조건에서 공공이 뭉쳐 팔면체 빈 공간을 만듦', '성장 속도/온도 기울기(V/G) 조건에 좌우'],
+      shape: '원자가 빠진 작은 팔면체 공간입니다. 내벽은 얇은 산화막으로 덮여 있습니다.',
+      mech: '내벽 표면 재결합만 일어나고 발광은 없습니다. 크기가 작아 캐리어 손실이 미미합니다.',
+      verdict: '<b>PL로는 거의 검출되지 않습니다.</b> 광산란(LST) 같은 다른 검사법이 적합하다는 것을 보여주는 예입니다.',
+      lattice: 'void', depth: { z: 2, size: 0.3, kind: 'sphere' } },
+    { key: 'ge_cluster', glyph: 'Ge', name: 'Ge 과잉 영역', eng: 'Ge-rich region / composition fluctuation', tags: ['SiGe 조성 요동', '수백 nm–µm', 'SiGe 전용'], sigeOnly: true,
+      cause: ['고농도 Ge 성장 시 3D 섬(Stranski–Krastanov) 경향', '성장 온도·가스 흐름 불균일로 인한 조성 요동', '열처리 중 Ge 확산·국부 편석'],
+      shape: 'SiGe 층 안에서 Ge 원자가 국부적으로 많은 영역입니다. 밴드갭이 주변보다 낮은 "우물"이 됩니다.',
+      mech: '밴드갭이 낮은 곳으로 주변 캐리어가 모여들고(가둠), 더 긴 파장(이 예시는 약 1460 nm)에서 강하게 발광합니다. 결함인데도 빛이 늘어나는 경우입니다.',
+      verdict: '<b>모든 채널에서 매우 밝은 점이고, 피크가 장파장으로 이동</b>합니다. 위치가 고정된 D1(1.55 µm)과 달리 Ge 농도에 따라 피크가 움직이는 것으로 구분합니다.',
+      lattice: 'ge', depth: { z: 0.037, size: 2, kind: 'region' } },
+    { key: 'particle', glyph: 'S', name: '표면 파티클 · 요철', eng: 'Surface particle / topography', tags: ['표면', 'µm 크기', '광학 현상'],
+      cause: ['공정 중 떨어진 파티클, 슬러리·잔류물', '표면 손상과 요철'],
+      shape: '결정 내부가 아니라 표면 위의 이물질입니다. 여기광을 가리고 표면 재결합을 늘립니다.',
+      mech: '레이저를 가려 그 아래 캐리어 생성이 줄고, 나오는 빛도 가립니다. Si 기판에서는 파장과 무관한 광학 효과라 스펙트럼 모양이 그대로입니다. SiGe 구조에서는 표면 SiGe 층의 발광이 캐리어 밀도에 초선형(∝ Δn²)으로 반응해 더 많이 줄어들어, 피크가 Si 쪽(약 1140 nm)으로 옮겨 갑니다.',
+      verdict: '<b>모든 채널에서 어둡게</b> 보이고 D-line이 없으며, 일반 광학 현미경에도 보입니다. 이 점으로 결정 결함과 구분합니다. 요철이 빛을 더 꺼내면 오히려 밝게 보이기도 합니다.',
+      lattice: 'particle', depth: { z: 0, size: 4, kind: 'particle' } },
+  ];
+  const CH = [
+    { id: 'bb', name: 'BB', band: '1050–1250 nm', color: '--bb', lo: 1050, hi: 1250 },
+    { id: 'sige', name: 'SiGe 대역', band: '1250–1400 nm', color: '--sige', lo: 1250, hi: 1400 },
+    { id: 'lp1400', name: 'LP1400', band: '> 1400 nm', color: '--dline', lo: 1400, hi: 1700 },
+  ];
+
+  let stack = 'SiGe', view = 'ratio', cur = 2;
+  try { const s = localStorage.getItem('pl-atlas-stack'); if (s === 'Si' || s === 'SiGe') stack = s; } catch (e) {}
+  const fromHash = DEF.findIndex(d => '#' + d.key === location.hash);
+  if (fromHash >= 0) cur = fromHash;
+
+  const avail = (d) => !!DATA.stacks[stack].defects[d.key];
+
+  // ---------------- 캔버스 도우미 ----------------
+  function fit(cv) {
+    const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+    const w = Math.max(10, Math.round(r.width * dpr)), h = Math.max(10, Math.round(r.height * dpr));
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { g, W: r.width, H: r.height };
+  }
+
+  // ---------------- 원자 모식도 (단계별 변화) ----------------
+  //  각 결함을 '정상 → … → 결함' 단계(keyframe)로 정의하고, 단계 사이를 부드럽게 보간합니다.
+  //  결합(손잡기)은 매 프레임 원자 간 거리로 다시 계산하고, 이웃이 4개보다 적은 원자를
+  //  '끊어진 결합(댕글링 본드)'으로 표시합니다 — 캐리어가 사라지는 곳입니다.
+  function rnd(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const LT = { kind: null, st: null, t: 0, anim: null, raf: 0 };
+  const ss = (u) => { u = Math.min(1, Math.max(0, u)); return u * u * (3 - 2 * u); };
+  const hexRGB = (h) => { h = (h || '#888888').trim().replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; };
+  const ANALOGY = {
+    perfect: '계란판을 반듯하게 쌓은 것과 같습니다. 모든 원자가 이웃과 손을 잡고 있어 캐리어를 붙잡을 빈손이 없습니다.',
+    point: '극장에서 한 자리가 비거나(공공), 통로에 누가 끼어 있거나(격자간 원자), 낯선 손님이 앉아 있는(불순물) 상태입니다.',
+    loop: '종이 더미 사이에 동전 하나를 끼워 넣은 것과 같습니다. 동전 둘레만큼 종이가 볼록해지고, 그 테두리가 전위선입니다.',
+    edge: '책 위쪽에서 종이 반 장을 밀어 넣은 것과 같습니다. 반 장이 끝나는 아래 모서리가 선(전위선)이 됩니다.',
+    misfit: '작은 타일 위에 큰 타일을 까는 것과 같습니다. 처음엔 억지로 맞추다가, 두꺼워지면 한 줄이 남아 계면에 선이 생깁니다.',
+    sf: '벽돌을 A-B-C 순서로 쌓다가 B를 하나 빼먹은 것과 같습니다. 그 면 위쪽이 한 칸 밀립니다.',
+    precip: '밥 속에 박힌 콩과 같습니다. 녹아 있던 산소가 모여 유리(SiOₓ) 알갱이가 되고 주변 결정을 밀어냅니다.',
+    void: '빵 속의 기포와 같습니다. 흩어져 있던 빈자리들이 모여 작은 빈 공간이 됩니다.',
+    ge: '고르게 섞인 반죽에 한 곳만 뭉친 덩어리와 같습니다. Ge가 많은 곳은 밴드갭이 낮아 캐리어가 고이는 웅덩이가 됩니다.',
+    particle: '햇볕 아래 놓인 돌멩이와 같습니다. 결정은 멀쩡하지만 그 아래로 그늘(여기광 차단)이 생깁니다.',
+  };
+
+  const VIEW = {
+    perfect: '단면 · 옆에서 본 모습 (위쪽 = 표면)',
+    point: '단면 · 옆에서 본 모습 (위쪽 = 표면)',
+    loop: '단면 · 루프 원판을 세로로 자른 면 (위쪽 = 표면)',
+    edge: '위에서 본 모습 · 수평으로 자른 면',
+    edge_side: '단면 · 옆에서 본 모습 (위쪽 = 표면)',
+    misfit: '단면 · 옆에서 본 모습 (위 = SiGe, 아래 = Si)',
+    sf: '단면 · 쌓임면을 수평으로 단순화 (실제는 54.7° 기울기)',
+    precip: '단면 · 모양은 보는 방향과 무관',
+    void: '단면 · 모양은 보는 방향과 무관',
+    ge: '단면 · 모양은 보는 방향과 무관',
+    particle: '단면 · 옆에서 본 모습 (위쪽 = 표면)',
+  };
+  function buildStages(kind, W, H) {
+    const R = rnd(11);
+    const s = Math.max(15, Math.min(W / 16, H / 10.5));
+    const cols = Math.floor((W - s * 0.8) / s) + 1, rows = Math.floor((H - s * 0.9) / s) + 1;
+    const ox = (W - (cols - 1) * s) / 2, oy = (H - (rows - 1) * s) / 2 + 3;
+    const ic = Math.floor((cols - 1) / 2), jc = Math.floor((rows - 1) / 2);
+    const cx = ox + ic * s, cy = oy + jc * s;
+    const out = { s, cols, rows, ox, oy, stages: [], noDangle: false, kind };
+    const lat = [];
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) lat.push({ x: ox + i * s, y: oy + j * s, i, j, c: 'si', r: s * 0.2, v: 1, lat: true });
+    const id = (i, j) => j * cols + i;
+    const cp = (arr) => arr.map(a => Object.assign({}, a));
+    const add = (name, desc, atoms, notes, extra) => out.stages.push(Object.assign({ name, desc, atoms, notes: notes || [] }, extra || {}));
+    const N = (x, y, t, col) => ({ x, y, t, col: col || 'acc' });
+    const cell = (i, j) => ({ x: ox + (i + 0.5) * s, y: oy + (j + 0.5) * s });
+
+    if (kind === 'perfect') {
+      add('정상 결정', '모든 원자가 이웃 4개와 결합해 있습니다(실제 Si는 3차원 정사면체로 4개). 끊어진 결합이 없으므로 캐리어가 잘 살아남아 빛을 냅니다.', cp(lat));
+    } else if (kind === 'point') {
+      const iA = id(Math.round(cols * 0.25), jc - 1), iM = id(Math.round(cols * 0.72), jc - 1);
+      const mi = { x: cell(Math.round(cols * 0.48), jc + 1).x, y: cell(Math.round(cols * 0.48), jc + 1).y, c: 'metal', r: s * 0.24, v: 0 };
+      const fi = { x: lat[iA].x + s / 2, y: lat[iA].y + s / 2, c: 'si', r: s * 0.2, v: 0 };
+      const all = lat.concat([mi, fi]);
+      const S0 = cp(all), S1 = cp(all);
+      S1[iA].v = 0;                                  // 빈자리
+      S1[iM].c = 'metal'; S1[iM].r = s * 0.26;       // 치환형 불순물
+      S1[all.length - 2].v = 1; S1[all.length - 1].v = 1;   // 격자간 불순물, 끼어든 원자
+      add('정상', '완전한 결정입니다.', S0);
+      add('점결함 생성', '원자 하나가 제자리를 벗어나 격자 사이에 끼고(빈자리 + 격자간 원자), 금속 불순물이 자리를 차지하거나 사이에 들어갑니다. 빨간 테두리 원자들이 캐리어를 잡아 빛 없이 소멸시킵니다.', S1,
+        [N(lat[iA].x, lat[iA].y - s * 0.5, '빈자리(공공)', 'muted'), N(lat[iA].x + s / 2, lat[iA].y + s * 1.05, '끼어든 원자'), N(lat[iM].x, lat[iM].y - s * 0.5, '불순물(Fe·Cu)'), N(mi.x, mi.y + s * 0.6, '격자간 불순물')]);
+    } else if (kind === 'loop') {
+      const jp = jc - 1, yp = oy + (jp + 0.5) * s, hw = Math.min(3, Math.floor(cols / 4)) * s;
+      const xs = []; for (let i = 0; i < cols; i++) { const x = ox + i * s; if (Math.abs(x - cx) <= hw - 0.5 * s + 1e-6) xs.push(x); }
+      const ins = xs.map(x => ({ x, y: yp, c: 'si', r: s * 0.2, v: 0, ins: true }));
+      const all = lat.concat(ins), nL = lat.length;
+      const f = (x) => 1 - ss((Math.abs(x - cx) - (hw - 0.5 * s)) / s);
+      const disp = (S, amp) => { for (let q = 0; q < nL; q++) { const a = S[q], d = a.y - yp; a.y += Math.sign(d) * (s / 2) * f(a.x) * Math.exp(-(Math.abs(d) - 0.5 * s) / (2.5 * s)) * amp; } };
+      const S0 = cp(all), S1 = cp(all), S2 = cp(all), S3 = cp(all);
+      // 주입 직후: 남는 원자(격자간)가 흩어지고, 튕겨 나간 원자 2개가 빈자리를 남김
+      const scatter = ins.map(() => cell(2 + Math.floor(R() * (cols - 5)), jp - 2 + Math.floor(R() * 5)));
+      ins.forEach((_, k) => { const q = nL + k; S0[q].x = S1[q].x = scatter[k].x; S0[q].y = S1[q].y = scatter[k].y; S1[q].v = 1; });
+      const fr = [id(2, jp + 3 < rows ? jp + 3 : jp), id(cols - 3, Math.max(0, jp - 2))];
+      fr.forEach((q) => { S1[q].v = 0; });
+      ins.forEach((_, k) => { const q = nL + k; S2[q].v = 1; S3[q].v = 1; });
+      disp(S2, 0.45); disp(S3, 1);
+      add('정상', '완전한 결정입니다.', S0);
+      add('이온 주입 직후', '이온이 격자를 때려 원자를 튕겨 냅니다. 제자리를 잃은 원자(격자간 원자)가 흩어지고 빈자리가 생깁니다. 이 상태는 PL 전체를 어둡게 만듭니다.', S1,
+        [N(cx, oy + (jp - 2.2) * s, '튕겨 나온 원자들 (남는 원자)')]);
+      add('열처리 — 모이는 중', '열을 받으면 빈자리는 다시 채워지고, 남는 원자들은 에너지가 낮은 한 면으로 모여듭니다.', S2,
+        [N(cx, yp - s * 0.85, '한 면으로 모이는 원자들')]);
+      add('전위 루프 완성', '원자면 한 장이 끼어든 원판이 됩니다. 원판 가운데는 결합이 멀쩡하고, 가장자리(⊥)에서만 결합이 끊깁니다 — 이 테두리가 D-line을 내는 전위선입니다.', S3,
+        [N(cx, yp - s * 1.3, '끼어든 원자면 (원판의 단면)'), N(cx - hw, yp + s * 0.2, '⊥'), N(cx + hw, yp + s * 0.2, '⊥')]);
+    } else if (kind === 'edge') {
+      const xp = ox + (ic + 0.5) * s, yc = oy + (jc + 0.5) * s;
+      const ins = []; for (let j = 0; j <= jc; j++) ins.push({ x: xp, y: oy + j * s, c: 'si', r: s * 0.2, v: 0, ins: true });
+      const all = lat.concat(ins), nL = lat.length;
+      const g = (y) => 1 - ss((y - (yc - 0.5 * s)) / s);
+      const S0 = cp(all), S1 = cp(all);
+      for (let q = 0; q < nL; q++) { const a = S1[q], d = a.x - xp; a.x += Math.sign(d) * (s / 2) * g(a.y) * Math.exp(-(Math.abs(d) - 0.5 * s) / (2.5 * s)); }
+      ins.forEach((_, k) => { S0[nL + k].y -= s * 0.6; S1[nL + k].v = 1; });
+      add('정상', '완전한 결정입니다.', S0);
+      add('위에서 본 관통 전위', '웨이퍼를 수평으로 잘라 위에서 본 면입니다. 세로로 선 원자면 하나가 반만 끼어 있어 양옆을 밀어내고, 그 원자면이 끝나는 곳(⊥)에서 결합이 끊깁니다. 이 ⊥ 지점이 화면 안쪽, 즉 깊이 방향으로 표면에서 아래까지 이어진 선이 관통 전위입니다.', S1,
+        [N(xp, oy - s * 0.15, '여분의 원자면 (세로로 선 면을 위에서 봄)'), N(xp, yc + s * 0.35, '⊥ 전위선 — 화면 안쪽(깊이 방향)으로 이어짐')]);
+    } else if (kind === 'edge_side') {
+      // 옆에서 본 단면: 전위선이 표면에서 아래로 곧게 뻗음. 선 위의 원자는 결합이 끊겨 있음(core).
+      const S0 = cp(lat), S1 = cp(lat);
+      for (let q = 0; q < lat.length; q++) {
+        const a = lat[q], zig = (a.j % 2 ? 1 : -1);
+        if (a.i === ic) { S1[q].x += 0.1 * s * zig; S1[q].core = true; }
+        else if (Math.abs(a.i - ic) === 1) S1[q].x += 0.04 * s * zig;
+      }
+      add('정상', '완전한 결정입니다.', S0, [N(cx, oy - s * 0.15, '표면', 'muted')]);
+      add('옆에서 본 관통 전위', '웨이퍼를 세로로 잘라 옆에서 본 면입니다. 결합이 끊긴 원자들이 표면에서 깊은 곳까지 한 줄로 이어집니다. 이 선을 따라 캐리어가 사라지므로, 위에서 PL로 보면 한 점(어두운 점, D-line 밝은 점)으로 나타납니다.', S1,
+        [N(cx, oy - s * 0.15, '표면 ↓ 관통 전위선'), N(cx, oy + (rows - 1) * s + s * 0.45, '깊이 방향으로 계속', 'muted')]);
+    } else if (kind === 'misfit') {
+      const nTop = Math.max(3, Math.floor(rows * 0.4));
+      const S0 = cp(lat), S1 = cp(lat);
+      for (let q = 0; q < lat.length; q++) {
+        const a = lat[q]; if (a.j >= nTop) continue;
+        S0[q].c = S1[q].c = 'ge'; S0[q].r = S1[q].r = s * 0.22; S0[q].noVac = S1[q].noVac = true;
+        if (a.i === cols - 1) S1[q].v = 0;
+        else S1[q].x = ox + a.i * s * (cols - 1) / (cols - 2);
+      }
+      const yI = oy + (nTop - 0.5) * s;
+      add('Strained SiGe', 'SiGe는 원래 원자 간격이 Si보다 4% 큽니다. 얇을 때는 아래 Si 간격에 억지로 맞춰(압축 변형) 모든 결합이 이어져 있습니다.', S0,
+        [N(cx, oy - s * 0.15, 'SiGe — Si 간격에 억지로 맞춤', 'ge'), N(cx, oy + (rows - 1) * s + s * 0.45, 'Si 기판', 'bb')]);
+      add('완화 → misfit 전위', '임계 두께를 넘으면 SiGe가 원래 간격으로 풀립니다. 위층은 한 줄이 모자라게 되고, 위아래 원자가 가장 어긋나는 계면 한가운데에서 결합이 끊깁니다. 이 줄이 계면을 따라 뻗은 misfit 전위입니다.', S1,
+        [N(cx, oy - s * 0.15, 'SiGe — 원래 간격으로 풀림 (한 줄 적음)', 'ge'), N(cx, yI + s * 0.05, '⊥ misfit 전위')]);
+    } else if (kind === 'sf') {
+      out.noDangle = true;
+      const dyR = 0.85 * s, rr = Math.floor((H - s) / dyR) + 1, oy2 = (H - (rr - 1) * dyR) / 2 + 2, jf = Math.floor(rr / 2);
+      const base = [];
+      for (let j = 0; j < rr; j++) for (let i = -1; i < cols + 1; i++) base.push({ x: ox + i * s + (j % 3) * s / 3, y: oy2 + j * dyR, j, c: 'si', r: s * 0.18, v: 1, row: j });
+      const S0 = cp(base), S1 = cp(base);
+      S1.forEach(a => { if (a.row >= jf) a.x += s / 3; });
+      out.sf = { rows: rr, oy2, dyR, jf };
+      add('정상 ABC 쌓임', '원자층이 A → B → C 위치를 돌아가며 쌓입니다(위에서 본 위치가 1/3씩 어긋남).', S0);
+      add('적층 결함', '한 층(B)이 빠져 그 위가 통째로 1/3칸 밀립니다. 결합은 대부분 이어져 있어 면 자체는 캐리어를 약하게 잡고, 면이 끝나는 가장자리(부분전위)가 강하게 잡으며 D-line을 냅니다. 이해를 돕기 위해 쌓임면을 수평으로 그렸지만, 실제 {111} 면은 표면과 54.7° 기울어져 있습니다(아래 3D 보기 참고).', S1,
+        [N(cx, oy2 + (jf - 0.5) * dyR - s * 0.05, '…ABCA | CABC… — 여기서 B층 누락')]);
+    } else if (kind === 'precip') {
+      const nO = 18, rr = 2.3 * s;
+      const O = []; for (let k = 0; k < nO; k++) { const p = cell(Math.floor(R() * (cols - 1)), Math.floor(R() * (rows - 1))); O.push({ x: p.x, y: p.y, c: 'ox', r: s * 0.15, v: 0 }); }
+      const all = lat.concat(O), nL = lat.length;
+      const S0 = cp(all), S1 = cp(all), S2 = cp(all);
+      O.forEach((_, k) => { S1[nL + k].v = 1; S2[nL + k].v = 1; const t = R() * 6.283, d = Math.sqrt(R()) * rr * 0.85; S2[nL + k].x = cx + d * Math.cos(t); S2[nL + k].y = cy + d * Math.sin(t); });
+      for (let q = 0; q < nL; q++) {
+        const a = S2[q], d = Math.hypot(a.x - cx, a.y - cy);
+        if (d < rr) { a.x += (R() - 0.5) * 0.5 * s; a.y += (R() - 0.5) * 0.5 * s; a.c = 'si'; a.amor = true; }
+        else { const fct = Math.min(1 + 0.16 * rr * rr / (d * d), 1.12); a.x = cx + (a.x - cx) * fct; a.y = cy + (a.y - cy) * fct; }
+      }
+      add('정상', '완전한 결정입니다.', S0);
+      add('산소가 녹아 있음', 'CZ 웨이퍼에는 산소 원자(보라)가 격자 사이에 녹아 있습니다. 아직 흩어져 있어 큰 문제가 없습니다.', S1, [N(cx, oy - s * 0.15, '격자 사이에 녹아 있는 산소')]);
+      add('열처리 → 석출물', '열처리 중 산소가 한 곳에 모여 SiOₓ 알갱이가 됩니다. 부피가 커서 주변 격자를 밀어내고, 그 경계에서 결합이 끊깁니다.', S2,
+        [N(cx, cy - rr * 1.3 - s * 0.1, 'SiOₓ 알갱이 → 주변 격자를 밀어냄')]);
+    } else if (kind === 'void') {
+      const S0 = cp(lat), S1 = cp(lat), S2 = cp(lat), rr = 2.4 * s;
+      const pick = []; while (pick.length < 12) { const q = id(1 + Math.floor(R() * (cols - 2)), 1 + Math.floor(R() * (rows - 2))); if (!pick.includes(q)) pick.push(q); }
+      pick.forEach(q => { S1[q].v = 0; });
+      S2.forEach(a => { if (Math.abs(a.x - cx) + Math.abs(a.y - cy) < rr) a.v = 0; });
+      add('정상', '완전한 결정입니다.', S0);
+      add('빈자리가 많이 생김', '결정 성장 조건에 따라 빈자리(공공)가 과잉으로 생겨 흩어져 있습니다.', S1);
+      add('모여서 보이드', '빈자리들이 한 곳에 모여 팔면체 빈 공간이 됩니다. 안쪽 벽의 원자들만 결합이 끊겨 있고, 크기가 작아 PL 영향은 미미합니다.', S2,
+        [N(cx, cy + s * 0.1, '빈 공간', 'muted')]);
+    } else if (kind === 'ge') {
+      out.noDangle = true;
+      const S0 = cp(lat), S1 = cp(lat), rr = 2.6 * s;
+      for (let q = 0; q < lat.length; q++) {
+        const inC = Math.hypot(lat[q].x - cx, lat[q].y - cy) < rr, u = R(), w = R();
+        if (u < 0.25) { S0[q].c = 'ge'; S0[q].r = s * 0.22; }
+        if (w < (inC ? 0.8 : 0.15)) { S1[q].c = 'ge'; S1[q].r = s * 0.22; }
+      }
+      out.geGlow = { x: cx, y: cy, r: rr * 1.15 };
+      add('SiGe 25% (고른 섞임)', 'Si(파랑) 사이에 Ge(주황)가 무작위로 25% 섞여 있습니다.', S0);
+      add('Ge 과잉 영역', '한 곳에 Ge가 몰립니다. 결합은 이어져 있지만 밴드갭이 낮은 "웅덩이"가 되어 주변 캐리어가 모여들고, 더 긴 파장으로 강하게 빛납니다.', S1,
+        [N(cx, cy - rr - s * 0.25, 'Ge가 몰린 곳 = 밴드갭 웅덩이', 'ge')]);
+    } else if (kind === 'particle') {
+      out.noDangle = true;
+      const top = 3, base = lat.filter(a => a.j >= top);
+      const pts = []; for (let k = 0; k < 14; k++) { const t = R() * Math.PI, d = Math.sqrt(R()); pts.push({ x: cx + Math.cos(t) * d * 2.2 * s, y: oy + (top - 0.62) * s - Math.sin(t) * d * 1.6 * s, c: 'pt', r: s * 0.27, v: 1, noVac: true }); }
+      const all = base.concat(pts), nB = base.length;
+      const S0 = cp(all), S1 = cp(all);
+      pts.forEach((_, k) => { S0[nB + k].y -= H * 0.55; S0[nB + k].v = 0; });
+      out.particle = { cx, top: oy + (top - 0.5) * s, w: 4.4 * s, bottom: oy + (rows - 1) * s };
+      add('깨끗한 표면', '여기광(초록)이 표면 전체에 고르게 들어갑니다.', S0);
+      add('파티클이 앉음', '결정은 그대로지만 파티클 아래로 그늘이 생겨 캐리어가 덜 만들어집니다. 옆에서 확산해 들어온 캐리어가 그늘을 일부 메웁니다.', S1,
+        [N(cx, oy + (top - 0.5) * s - 2.0 * s, '파티클 (이물질)', 'muted')]);
+    }
+    return out;
+  }
+
+  function renderLattice() {
+    const L = LT.st; if (!L) return;
+    const cv = $('cvLat'), { g, W, H } = fit(cv), s = L.s;
+    const C = { si: hexRGB(css('--bb')), ge: hexRGB(css('--sige')), metal: hexRGB(css('--accent')), ox: hexRGB(css('--cluster')), pt: hexRGB(css('--muted')) };
+    const soft = css('--soft'), lineC = css('--muted'), acc = css('--accent');
+    g.fillStyle = soft; g.fillRect(0, 0, W, H);
+    const n = L.stages.length, t = Math.min(Math.max(LT.t, 0), n - 1);
+    const k = n === 1 ? 0 : Math.min(n - 2, Math.floor(t)), f = n === 1 ? 0 : ss(t - k);
+    const A = L.stages[k].atoms, B = L.stages[Math.min(k + 1, n - 1)].atoms;
+    const cur = A.map((a, q) => {
+      const b = B[q], ca = C[a.c] || C.si, cb = C[b.c] || C.si;
+      return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, r: a.r + (b.r - a.r) * f, v: a.v + (b.v - a.v) * f,
+        col: ca.map((u, i) => Math.round(u + (cb[i] - u) * f)), kind: f < 0.5 ? a.c : b.c, lat: a.lat, noVac: a.noVac, amor: f < 0.5 ? a.amor : b.amor, core: f < 0.5 ? a.core : b.core, bx: a.x, by: a.y };
+    });
+    const wLast = n === 1 ? 1 : (k === n - 2 ? f : 0);
+    // 배경 연출
+    if (L.geGlow) { const G = L.geGlow, gr = g.createRadialGradient(G.x, G.y, 0, G.x, G.y, G.r); gr.addColorStop(0, `rgba(${C.ge.join(',')},${0.35 * wLast})`); gr.addColorStop(1, `rgba(${C.ge.join(',')},0)`); g.fillStyle = gr; g.fillRect(0, 0, W, H); }
+    if (L.particle) {
+      const P = L.particle;
+      g.strokeStyle = 'rgba(46,160,90,0.75)'; g.lineWidth = 2;
+      for (let q = -3; q <= 3; q++) { const x = P.cx + q * s * 1.3; const blocked = Math.abs(x - P.cx) < P.w / 2 && wLast > 0.5; g.beginPath(); g.moveTo(x, 2); g.lineTo(x, blocked ? P.top - 1.6 * s : P.top); g.stroke(); }
+      if (wLast > 0) { const gr = g.createLinearGradient(0, P.top, 0, P.bottom); gr.addColorStop(0, `rgba(0,0,0,${0.28 * wLast})`); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(P.cx - P.w / 2, P.top); g.lineTo(P.cx + P.w / 2, P.top); g.lineTo(P.cx + P.w * 0.9, P.bottom); g.lineTo(P.cx - P.w * 0.9, P.bottom); g.closePath(); g.fill(); }
+    }
+    if (L.sf && wLast > 0) { const y = L.sf.oy2 + (L.sf.jf - 0.5) * L.sf.dyR; g.strokeStyle = acc; g.globalAlpha = wLast; g.setLineDash([6, 4]); g.lineWidth = 1.5; g.beginPath(); g.moveTo(26, y); g.lineTo(W - 4, y); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; }
+    // 결합 (거리로 판정)
+    const bondable = (a) => a.v > 0.35 && !a.amor && (a.kind === 'si' || a.kind === 'ge' || a.kind === 'metal');
+    const nb = new Array(cur.length).fill(0);
+    const lo = (L.kind === 'sf' ? 0.7 : 0.8) * s, hi = (L.kind === 'sf' ? 1.12 : L.kind === 'misfit' ? 1.09 : 1.06) * s;
+    g.lineWidth = 1.2;
+    for (let a = 0; a < cur.length; a++) {
+      const A1 = cur[a]; if (!bondable(A1)) continue;
+      for (let b = a + 1; b < cur.length; b++) {
+        const B1 = cur[b]; if (!bondable(B1)) continue;
+        const dx = A1.x - B1.x, dy = A1.y - B1.y; if (Math.abs(dx) > hi || Math.abs(dy) > hi) continue;
+        const d = Math.hypot(dx, dy); if (d < lo || d > hi) continue;
+        nb[a]++; nb[b]++;
+        g.strokeStyle = lineC; g.globalAlpha = 0.45 * Math.min(A1.v, B1.v); g.beginPath(); g.moveTo(A1.x, A1.y); g.lineTo(B1.x, B1.y); g.stroke();
+      }
+    }
+    g.globalAlpha = 1;
+    // 빈자리 표시
+    for (const a of cur) if (a.lat && !a.noVac && a.v < 0.6) { g.globalAlpha = (0.6 - a.v) / 0.6 * 0.9; g.strokeStyle = lineC; g.setLineDash([3, 3]); g.beginPath(); g.arc(a.x, a.y, a.r, 0, 7); g.stroke(); g.setLineDash([]); }
+    g.globalAlpha = 1;
+    // 원자
+    for (const a of cur) {
+      if (a.v < 0.02) continue;
+      g.globalAlpha = a.v * (a.amor ? 0.45 : a.kind === 'si' ? 0.85 : 1);
+      g.fillStyle = `rgb(${a.col.join(',')})`; g.beginPath(); g.arc(a.x, a.y, a.r, 0, 7); g.fill();
+    }
+    g.globalAlpha = 1;
+    // 끊어진 결합
+    const showD = $('latDangle').checked && !L.noDangle;
+    let nD = 0;
+    if (showD) {
+      const x0 = L.ox + 0.6 * s, x1 = L.ox + (L.cols - 1) * s - 0.6 * s, y0 = L.oy + 0.6 * s, y1 = L.oy + (L.rows - 1) * s - 0.6 * s;
+      cur.forEach((a, q) => {
+        if (!bondable(a) || a.v < 0.6 || (nb[q] >= 4 && !a.core)) return;
+        if (a.x < x0 || a.x > x1 || a.y < y0 || a.y > y1) return;
+        nD++;
+        g.strokeStyle = acc; g.lineWidth = 2.2; g.beginPath(); g.arc(a.x, a.y, a.r + 3.2, 0, 7); g.stroke();
+      });
+    }
+    // 적층 순서 글자
+    if (L.sf) {
+      g.font = '600 12px ' + css('--f-mono'); g.textAlign = 'left'; g.textBaseline = 'middle';
+      for (let j = 0; j < L.sf.rows; j++) {
+        const a = cur.find(x => x.y > L.sf.oy2 + (j - 0.4) * L.sf.dyR && x.y < L.sf.oy2 + (j + 0.4) * L.sf.dyR && x.x > L.ox - 0.1 * s);
+        if (!a) continue;
+        const off = (((a.x - L.ox) % s) + s) % s, idx = Math.round(off / (s / 3)) % 3;
+        g.fillStyle = soft; g.fillRect(2, L.sf.oy2 + j * L.sf.dyR - 8, 16, 16);
+        g.fillStyle = (j === L.sf.jf - 1 || j === L.sf.jf) && wLast > 0.5 ? acc : lineC; g.fillText('ABC'[idx], 5, L.sf.oy2 + j * L.sf.dyR);
+      }
+    }
+    // 라벨 (가장 가까운 단계)
+    const near = Math.round(t), stN = L.stages[near];
+    if (Math.abs(t - near) < 0.3 && stN.notes.length) {
+      g.font = '600 12.5px ' + css('--f-body'); g.textAlign = 'center'; g.textBaseline = 'bottom';
+      const colOf = { acc, muted: lineC, ge: css('--sige'), bb: css('--bb') };
+      for (const nt of stN.notes) {
+        const w = g.measureText(nt.t).width + 10, x = Math.min(Math.max(nt.x, w / 2 + 2), W - w / 2 - 2), y = Math.min(Math.max(nt.y, 19), H - 2);
+        g.fillStyle = soft; g.globalAlpha = 0.88; g.fillRect(x - w / 2, y - 17, w, 18); g.globalAlpha = 1;
+        g.fillStyle = colOf[nt.col] || acc; g.fillText(nt.t, x, y);
+      }
+    }
+    // 단계 표시 동기화
+    const st = L.stages[near];
+    $('latT').value = t;
+    document.querySelectorAll('#latStages button').forEach((b, i) => b.setAttribute('aria-current', i === near ? 'true' : 'false'));
+    $('capLat').textContent = st.desc + (showD ? (nD ? ` (끊어진 결합 ${nD}곳)` : '') : '');
+  }
+
+  LT.edgeView = 'plan';
+  function drawLattice(kind) {
+    const cv = $('cvLat'), r = cv.getBoundingClientRect();
+    $('latViewSeg').hidden = kind !== 'edge';
+    if (kind === 'edge' && LT.edgeView === 'side') kind = 'edge_side';
+    $('latView').textContent = '보는 방향: ' + (VIEW[kind] || '단면');
+    const fresh = LT.kind !== kind;
+    LT.st = buildStages(kind, r.width, r.height);
+    LT.kind = kind;
+    const n = LT.st.stages.length;
+    if (fresh) { LT.t = n - 1; LT.anim = null; }
+    LT.t = Math.min(LT.t, n - 1);
+    $('latT').max = Math.max(n - 1, 0); $('latT').disabled = n === 1; $('latPlay').disabled = n === 1;
+    $('latAnalogy').innerHTML = '<b>비유</b> ' + (ANALOGY[kind === 'edge_side' ? 'edge' : kind] || '');
+    const bar = $('latStages'); bar.innerHTML = '';
+    LT.st.stages.forEach((st, i) => {
+      const b = document.createElement('button'); b.textContent = (n > 1 ? (i + 1) + '. ' : '') + st.name;
+      b.addEventListener('click', () => animateTo(i)); bar.append(b);
+    });
+    renderLattice();
+  }
+  function animateTo(target, from) {
+    if (reduceMotion) { LT.t = target; LT.anim = null; renderLattice(); return; }
+    const t0 = from !== undefined ? from : LT.t;
+    LT.anim = { from: t0, to: target, start: performance.now(), dur: Math.max(400, Math.abs(target - t0) * 1300) };
+    if (!LT.raf) LT.raf = requestAnimationFrame(stepLattice);
+  }
+  function stepLattice(now) {
+    LT.raf = 0; const a = LT.anim; if (!a) return;
+    const u = Math.min(1, (now - a.start) / a.dur);
+    LT.t = a.from + (a.to - a.from) * u;
+    renderLattice();
+    if (u < 1) LT.raf = requestAnimationFrame(stepLattice); else { LT.anim = null; $('latPlay').textContent = '▶ 처음부터 재생'; }
+  }
+  $('latT').addEventListener('input', () => { LT.anim = null; LT.t = +$('latT').value; renderLattice(); });
+  $('latPlay').addEventListener('click', () => { const n = LT.st.stages.length; $('latPlay').textContent = '▶ 재생 중'; animateTo(n - 1, 0); });
+  $('latDangle').addEventListener('change', renderLattice);
+  document.querySelectorAll('#latViewSeg button').forEach(b => b.addEventListener('click', () => {
+    LT.edgeView = b.dataset.ev;
+    document.querySelectorAll('#latViewSeg button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    drawLattice('edge');
+  }));
+
+  // ---------------- 단면 모식도 ----------------
+  function drawCross(d) {
+    const cv = $('cvCross'), { g, W, H } = fit(cv);
+    const soft = css('--soft'), ink = css('--ink'), muted = css('--muted'), acc = css('--accent');
+    g.fillStyle = soft; g.fillRect(0, 0, W, H);
+    const maxZ = 10, padL = 64, padT = 26, h = H - padT - 12, w = W - padL - 14;
+    const Y = (z) => padT + Math.sqrt(Math.max(z, 0) / maxZ) * h;
+    const layers = stack === 'Si' ? [['SiO₂ 2 nm', 0, 0.002, '--line'], ['Si 기판 (p, τ 10 µs)', 0.002, maxZ, '--bb']]
+      : [['SiO₂ 2 nm', 0, 0.002, '--line'], ['Si cap 10 nm', 0.002, 0.012, '--bb'], ['SiGe x=0.25 · 50 nm', 0.012, 0.062, '--sige'], ['Si 기판', 0.062, maxZ, '--bb']];
+    g.font = '12px ' + css('--f-body'); g.textBaseline = 'middle';
+    for (const [name, z0, z1, col] of layers) {
+      const y0 = Y(z0), y1 = Y(z1);
+      g.fillStyle = css(col); g.globalAlpha = col === '--line' ? 0.9 : 0.16; g.fillRect(padL, y0, w, Math.max(1, y1 - y0)); g.globalAlpha = 1;
+      g.strokeStyle = css('--line'); g.beginPath(); g.moveTo(padL, y1); g.lineTo(padL + w, y1); g.stroke();
+    }
+    // 레이어 이름
+    g.fillStyle = ink; g.textAlign = 'right';
+    const lab = stack === 'Si' ? [['Si 기판', 4]] : [['SiGe 25% (위 10 nm는 Si cap)', 0.04], ['Si 기판', 4]];
+    // 흡수 깊이(532 nm, 1/α = 1.27 µm) 그라데이션
+    const grd = g.createLinearGradient(0, Y(0), 0, Y(4));
+    grd.addColorStop(0, 'rgba(46,160,90,0.35)'); grd.addColorStop(1, 'rgba(46,160,90,0)');
+    g.fillStyle = grd; g.fillRect(padL + w - 26, Y(0), 14, Y(4) - Y(0));
+    g.fillStyle = muted; g.textAlign = 'right'; g.font = '11px ' + css('--f-mono');
+    g.fillText('532 nm 흡수', padL + w - 30, Y(0.5));
+    g.fillText('1/α', padL + w - 30, Y(1.27));
+    g.strokeStyle = 'rgba(46,160,90,0.9)'; g.beginPath(); g.moveTo(padL + w - 28, Y(1.27)); g.lineTo(padL + w - 10, Y(1.27)); g.stroke();
+    for (const z of [0.01, 0.1, 0.5, 1, 2, 5, 10]) { g.fillStyle = muted; g.fillText(z < 1 ? (z * 1000) + ' nm' : z + ' µm', padL - 6, Y(z)); g.strokeStyle = css('--line'); g.globalAlpha = 0.6; g.beginPath(); g.moveTo(padL, Y(z)); g.lineTo(padL + 6, Y(z)); g.stroke(); g.globalAlpha = 1; }
+    g.textAlign = 'left'; g.font = '12px ' + css('--f-body'); g.fillStyle = ink;
+    for (const [n, z] of lab) g.fillText(n, padL + 8, Y(z));
+    g.fillStyle = muted; g.fillText('표면 · 여기광 ↓  PL ↑', padL, 12);
+    // 결함
+    const D = d.depth, cx = padL + w * 0.5;
+    g.strokeStyle = acc; g.fillStyle = acc; g.lineWidth = 2.5;
+    if (D) {
+      const yz = Y(D.z);
+      if (D.kind === 'vline') { g.beginPath(); g.moveTo(cx, Y(0.002)); g.lineTo(cx, Y(D.z + D.size)); g.stroke(); }
+      else if (D.kind === 'hline') { g.beginPath(); g.moveTo(padL + 4, yz); g.lineTo(padL + w - 40, yz); g.stroke(); }
+      else if (D.kind === 'sf') { g.globalAlpha = 0.25; g.beginPath(); g.moveTo(cx - 30, Y(0.002)); g.lineTo(cx + 30, Y(0.002)); g.lineTo(cx, Y(D.size * 0.816)); g.closePath(); g.fill(); g.globalAlpha = 1; g.stroke(); }
+      else if (D.kind === 'particle') { g.beginPath(); g.ellipse(cx, padT - 1, 24, 10, 0, Math.PI, 0); g.fill(); }
+      else if (D.kind === 'region') { g.setLineDash([4, 3]); g.beginPath(); g.ellipse(cx, yz, Math.max(10, D.size * 6), Math.max(6, Math.abs(Y(D.z + D.size / 2) - yz)), 0, 0, 7); g.stroke(); g.setLineDash([]); }
+      else if (D.kind === 'loop') { g.beginPath(); g.ellipse(cx, yz, 9, 3, 0, 0, 7); g.stroke(); }
+      else { g.beginPath(); g.arc(cx, yz, 5, 0, 7); g.fill(); }
+      $('capCross').textContent = `시뮬레이션 배치: 깊이 ${D.z < 1 ? Math.round(D.z * 1000) + ' nm' : D.z + ' µm'}, 크기 ${D.size < 1 ? Math.round(D.size * 1000) + ' nm' : D.size + ' µm'}. 초록 그라데이션은 여기광이 흡수되는 깊이입니다.`;
+    } else $('capCross').textContent = '초록 그라데이션은 532 nm 여기광이 흡수되는 깊이(1/α ≈ 1.3 µm)입니다. 캐리어는 그보다 훨씬 깊이까지 확산합니다.';
+  }
+
+  // ---------------- PL 이미지 ----------------
+  function divergeColor(t) { // t ∈ [-1, 1]
+    const a = [43, 103, 207], m = [236, 238, 242], b = [196, 47, 76];
+    const u = Math.min(1, Math.abs(t)), c = t < 0 ? a : b;
+    return [m[0] + (c[0] - m[0]) * u, m[1] + (c[1] - m[1]) * u, m[2] + (c[2] - m[2]) * u];
+  }
+  function drawPL(d) {
+    const S = DATA.stacks[stack], rec = S.defects[d.key], n = DATA.n, row = $('plRow');
+    row.innerHTML = '';
+    let span = 0.05;
+    for (const ch of CH) for (const v of rec.ratio[ch.id]) span = Math.max(span, Math.abs(Math.log10(Math.max(v, 1e-6))));
+    span = Math.min(span, 2);
+    const stats = rec.stats ? rec.stats[0] : null;
+    CH.forEach((ch, ci) => {
+      const cell = document.createElement('div'); cell.className = 'pl-cell';
+      const cv = document.createElement('canvas'); cv.width = n; cv.height = n; cv.setAttribute('aria-label', ch.name + ' 채널 이미지');
+      const lab = document.createElement('div'); lab.className = 'lab';
+      const st = stats ? stats[ci] : null;
+      lab.innerHTML = `<span style="color:var(${ch.color})">${ch.name}</span><span class="v">${st ? fmtC(st) : ch.band}</span>`;
+      cell.append(cv, lab); row.append(cell);
+      const g = cv.getContext('2d'), id = g.createImageData(n, n), R = rec.ratio[ch.id];
+      let lo = Infinity, hi = -Infinity; for (const v of R) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+      for (let q = 0; q < n * n; q++) {
+        let rgb;
+        if (view === 'ratio') rgb = divergeColor(Math.log10(Math.max(R[q], 1e-6)) / span);
+        else { const t = hi - lo < 1e-4 * hi ? 0.5 : (R[q] - lo) / (hi - lo); const v = 255 * Math.pow(t, 0.8); rgb = [v, v, v]; }
+        id.data[q * 4] = rgb[0]; id.data[q * 4 + 1] = rgb[1]; id.data[q * 4 + 2] = rgb[2]; id.data[q * 4 + 3] = 255;
+      }
+      g.putImageData(id, 0, 0);
+      const [pi, pj] = rec.pix; g.strokeStyle = 'rgba(0,229,255,0.9)'; g.lineWidth = 0.35; g.strokeRect(pi - 1, pj - 1, 3, 3);
+      cv.addEventListener('mousemove', (e) => {
+        const r = cv.getBoundingClientRect(), i = Math.floor((e.clientX - r.left) / r.width * n), j = Math.floor((e.clientY - r.top) / r.height * n);
+        if (i < 0 || j < 0 || i >= n || j >= n) return;
+        lab.querySelector('.v').textContent = `(${i},${j}) µm  ×${fmtR(R[j * n + i])}`;
+      });
+      cv.addEventListener('mouseleave', () => { lab.querySelector('.v').textContent = st ? fmtC(st) : ch.band; });
+    });
+    const cb = $('cbar'); cb.innerHTML = '';
+    if (view === 'ratio') {
+      const c = document.createElement('canvas'); c.width = 200; c.height = 1; const g = c.getContext('2d'), id = g.createImageData(200, 1);
+      for (let x = 0; x < 200; x++) { const rgb = divergeColor(x / 99.5 - 1); id.data.set([rgb[0], rgb[1], rgb[2], 255], x * 4); }
+      g.putImageData(id, 0, 0);
+      cb.append(Object.assign(document.createElement('span'), { textContent: '×' + fmtR(Math.pow(10, -span)) + ' 어두움' }), c, Object.assign(document.createElement('span'), { textContent: '밝음 ×' + fmtR(Math.pow(10, span)) }));
+    } else cb.append(Object.assign(document.createElement('span'), { textContent: '각 채널을 자동 밝기로 표시 — 실제 카메라에서 보이는 모습에 가깝습니다 (노이즈 제외).' }));
+    $('capPL').textContent = `시야 48 × 48 µm, 1 µm 픽셀. 하늘색 네모는 아래 스펙트럼을 뽑은 위치입니다. 라벨의 % 는 국부 대비, SNR은 단일 픽셀 기준입니다.`;
+  }
+  function fmtR(v) { return v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v >= 0.1 ? v.toFixed(2) : v.toExponential(1); }
+  function fmtC(st) {
+    if (!st.det) return '검출 어려움';
+    const c = st.contrast * 100;
+    return (c > 0 ? '+' : '') + (Math.abs(c) >= 1000 ? (c / 100).toFixed(0) + '×' : c.toFixed(1) + '%') + ' · SNR ' + (st.snr >= 100 ? Math.round(st.snr) : st.snr.toFixed(1));
+  }
+
+  // ---------------- 스펙트럼 ----------------
+  let specGeom = null;
+  function drawSpec(d) {
+    const cv = $('cvSpec'), { g, W, H } = fit(cv);
+    const S = DATA.stacks[stack], rec = S.defects[d.key], L = DATA.lam, ref = S.refSpec;
+    const logy = $('chkLog').checked, comp = $('chkComp').checked && d.key !== 'normal';
+    g.fillStyle = css('--panel'); g.fillRect(0, 0, W, H);
+    const pl = 58, pr = 14, pt = 14, pb = 34, w = W - pl - pr, h = H - pt - pb;
+    const series = [{ y: ref.total, col: css('--muted'), dash: [6, 4], lw: 2, name: '정상' }];
+    if (d.key !== 'normal') series.push({ y: rec.spec.total, col: css('--ink'), lw: 2.4, name: '결함 위치' });
+    if (comp) [['Si', '--bb', 'Si 밴드간'], ['SiGe', '--sige', 'SiGe 밴드간'], ['cluster', '--cluster', 'Ge 과잉 영역'], ['D', '--dline', 'D-line']].forEach(([k, c, nm]) => {
+      if (rec.spec[k].some(v => v > 0) && Math.max(...rec.spec[k]) > 1e-4 * Math.max(...rec.spec.total)) series.push({ y: rec.spec[k], col: css(c), lw: 1.5, name: nm, thin: true });
+    });
+    let ymax = 0; for (const s of series) for (const v of s.y) ymax = Math.max(ymax, v);
+    const ymin = logy ? ymax * 1e-4 : 0;
+    const X = (l) => pl + (l - 900) / 800 * w;
+    const Y = logy ? (v) => pt + h - (Math.log10(Math.max(v, ymin)) - Math.log10(ymin)) / (Math.log10(ymax * 1.5) - Math.log10(ymin)) * h : (v) => pt + h - v / (ymax * 1.08) * h;
+    // 채널 음영
+    CH.forEach(ch => { g.fillStyle = css(ch.color); g.globalAlpha = 0.08; g.fillRect(X(ch.lo), pt, X(ch.hi) - X(ch.lo), h); g.globalAlpha = 1; g.fillStyle = css(ch.color); g.font = '500 11px ' + css('--f-mono'); g.textBaseline = 'top'; g.textAlign = 'left'; g.fillText(ch.name, X(ch.lo) + 4, pt + 3); });
+    // 격자/축
+    g.strokeStyle = css('--line'); g.lineWidth = 1; g.fillStyle = css('--muted'); g.font = '11px ' + css('--f-mono');
+    g.textAlign = 'center'; g.textBaseline = 'top';
+    for (let l = 900; l <= 1700; l += 100) { g.globalAlpha = 0.5; g.beginPath(); g.moveTo(X(l), pt); g.lineTo(X(l), pt + h); g.stroke(); g.globalAlpha = 1; g.fillText(l, X(l), pt + h + 5); }
+    g.fillText('파장 (nm)', pl + w / 2, pt + h + 19);
+    g.textAlign = 'right'; g.textBaseline = 'middle';
+    if (logy) { for (let e = Math.ceil(Math.log10(ymin)); e <= Math.log10(ymax * 1.5); e++) { const y = Y(Math.pow(10, e)); g.globalAlpha = 0.5; g.beginPath(); g.moveTo(pl, y); g.lineTo(pl + w, y); g.stroke(); g.globalAlpha = 1; g.fillText('1e' + e, pl - 6, y); } }
+    else { for (let t = 0; t <= 4; t++) { const v = ymax * t / 4, y = Y(v); g.globalAlpha = 0.5; g.beginPath(); g.moveTo(pl, y); g.lineTo(pl + w, y); g.stroke(); g.globalAlpha = 1; g.fillText(v.toExponential(0), pl - 6, y); } }
+    g.save(); g.translate(13, pt + h / 2); g.rotate(-Math.PI / 2); g.textAlign = 'center'; g.fillText('검출 광전자 (e⁻/s/nm)', 0, 0); g.restore();
+    // D-line 표시
+    [['D1', 1550], ['D2', 1438], ['Si', 1125]].forEach(([t, l]) => { g.strokeStyle = css(t === 'Si' ? '--bb' : '--dline'); g.globalAlpha = 0.5; g.setLineDash([2, 3]); g.beginPath(); g.moveTo(X(l), pt + 16); g.lineTo(X(l), pt + h); g.stroke(); g.setLineDash([]); g.globalAlpha = 1; g.fillStyle = css(t === 'Si' ? '--bb' : '--dline'); g.textAlign = 'center'; g.font = '10.5px ' + css('--f-mono'); g.fillText(t, X(l), pt + 22); });
+    g.save(); g.beginPath(); g.rect(pl, pt, w, h); g.clip();
+    for (const s of series) {
+      g.strokeStyle = s.col; g.lineWidth = s.lw; g.setLineDash(s.dash || []); g.beginPath();
+      s.y.forEach((v, i) => { const x = X(L[i]), y = Y(v); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.stroke();
+    }
+    g.restore(); g.setLineDash([]);
+    g.strokeStyle = css('--line'); g.strokeRect(pl + 0.5, pt + 0.5, w, h);
+    specGeom = { X, pl, w, pt, h, series, L };
+    $('legend').innerHTML = series.map(s => `<span><i style="border-color:${s.col};${s.dash ? 'border-top-style:dashed' : ''}"></i>${s.name}</span>`).join('');
+    const pk = (a) => L[a.indexOf(Math.max(...a))];
+    const tot = (a) => a.reduce((x, y) => x + y, 0);
+    let msg = `정상 피크 ${pk(ref.total)} nm`;
+    if (d.key !== 'normal') msg += ` · 결함 위치 피크 ${pk(rec.spec.total)} nm · 전체 세기 ×${fmtR(tot(rec.spec.total) / tot(ref.total))}`;
+    $('readout').textContent = msg;
+    $('readout').dataset.base = msg;
+  }
+  $('cvSpec').addEventListener('mousemove', (e) => {
+    if (!specGeom) return;
+    const r = $('cvSpec').getBoundingClientRect(), x = e.clientX - r.left;
+    const l = 900 + (x - specGeom.pl) / specGeom.w * 800; if (l < 900 || l > 1700) return;
+    const i = Math.round((l - 900) / 5);
+    $('readout').textContent = `${specGeom.L[i]} nm — ` + specGeom.series.map(s => `${s.name} ${s.y[i].toExponential(2)}`).join(' · ');
+  });
+  $('cvSpec').addEventListener('mouseleave', () => { $('readout').textContent = $('readout').dataset.base || ''; });
+
+  // ---------------- 3D 결함 형상 ----------------
+  const V3 = { theta: -0.75, phi: 1.02, dist: 64, goal: null, drag: null, raf: 0, visible: true, labels: [] };
+  const LAT = 30, SC = LAT / 48, ZMAX = 10, DEP = 14;            // 48 µm → 30 단위, 깊이 10 µm → 14 단위(√)
+  const PX = (x) => (x - 24) * SC, PZ = (y) => (y - 24) * SC;
+  const PY = (z) => -DEP * Math.sqrt(Math.min(Math.max(z, 0), ZMAX) / ZMAX);
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function init3D() {
+    const host = $('v3');
+    if (!window.THREE) { host.innerHTML = '<div class="msg">3D 라이브러리를 불러오지 못했습니다. 네트워크 연결을 확인해 주세요.</div>'; return false; }
+    try { V3.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+    catch (e) { host.innerHTML = '<div class="msg">이 브라우저에서는 3D(WebGL)를 쓸 수 없습니다.</div>'; return false; }
+    V3.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    host.append(V3.renderer.domElement);
+    V3.scene = new THREE.Scene();
+    V3.camera = new THREE.PerspectiveCamera(32, 2, 0.1, 600);
+    V3.target = new THREE.Vector3(0, -6.5, 0);
+    V3.scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+    const dl = new THREE.DirectionalLight(0xffffff, 0.75); dl.position.set(20, 40, 25); V3.scene.add(dl);
+    V3.group = new THREE.Group(); V3.scene.add(V3.group);
+    V3.auto = !reduceMotion;
+    const el = V3.renderer.domElement;
+    el.addEventListener('pointerdown', (e) => { V3.drag = { x: e.clientX, y: e.clientY }; V3.goal = null; el.setPointerCapture(e.pointerId); kick(); });
+    el.addEventListener('pointermove', (e) => {
+      if (!V3.drag) return;
+      V3.theta -= (e.clientX - V3.drag.x) * 0.008;
+      V3.phi = Math.min(Math.PI / 2 - 0.01, Math.max(0.02, V3.phi - (e.clientY - V3.drag.y) * 0.008));
+      V3.drag = { x: e.clientX, y: e.clientY }; kick();
+    });
+    const end = () => { V3.drag = null; };
+    el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    new ResizeObserver(size3D).observe(host);
+    new IntersectionObserver((es) => { V3.visible = es[0].isIntersecting; if (V3.visible) kick(); }).observe(host);
+    const setAuto = (on) => { V3.auto = on; $('v3Auto').setAttribute('aria-pressed', on); kick(); };
+    $('v3Auto').addEventListener('click', () => setAuto(!V3.auto));
+    $('v3Iso').addEventListener('click', () => { setAuto(false); V3.goal = { theta: -0.75, phi: 1.02 }; kick(); });
+    $('v3Top').addEventListener('click', () => { setAuto(false); V3.goal = { theta: 0, phi: 0.02 }; kick(); });
+    $('v3Side').addEventListener('click', () => { setAuto(false); V3.goal = { theta: 0, phi: Math.PI / 2 - 0.01 }; kick(); });
+    $('v3Auto').setAttribute('aria-pressed', V3.auto);
+    size3D();
+    return true;
+  }
+  function size3D() {
+    const host = $('v3'), w = host.clientWidth, h = host.clientHeight;
+    if (!V3.renderer || !w || !h) return;
+    V3.renderer.setSize(w, h, false); V3.camera.aspect = w / h;
+    V3.dist = 74 * Math.max(1, 1.9 / V3.camera.aspect);
+    V3.camera.updateProjectionMatrix(); kick();
+  }
+  function kick() { if (V3.renderer && !V3.raf) V3.raf = requestAnimationFrame(frame3D); }
+  function frame3D() {
+    V3.raf = 0;
+    if (V3.auto && !V3.drag && !V3.goal) V3.theta += 0.0035;
+    if (V3.goal) {
+      let dt = V3.goal.theta - V3.theta; dt = Math.atan2(Math.sin(dt), Math.cos(dt));
+      const dp = V3.goal.phi - V3.phi;
+      V3.theta += dt * 0.15; V3.phi += dp * 0.15;
+      if (Math.abs(dt) < 0.002 && Math.abs(dp) < 0.002) { V3.theta = V3.goal.theta; V3.phi = V3.goal.phi; V3.goal = null; }
+    }
+    const t = V3.target, d = V3.dist, c = V3.camera;
+    c.position.set(t.x + d * Math.sin(V3.phi) * Math.sin(V3.theta), t.y + d * Math.cos(V3.phi), t.z + d * Math.sin(V3.phi) * Math.cos(V3.theta));
+    c.lookAt(t);
+    V3.renderer.render(V3.scene, c);
+    placeLabels();
+    if (V3.visible && (V3.auto || V3.goal || V3.drag)) kick();
+  }
+  function placeLabels() {
+    const host = $('v3'), w = host.clientWidth, h = host.clientHeight, v = new THREE.Vector3();
+    for (const L of V3.labels) {
+      v.copy(L.pos).project(V3.camera);
+      const off = v.z > 1 || v.x < -1.05 || v.x > 1.05 || v.y < -1.05 || v.y > 1.05;
+      L.el.style.display = off ? 'none' : '';
+      L.el.style.left = ((v.x + 1) / 2 * w) + 'px'; L.el.style.top = ((1 - v.y) / 2 * h) + 'px';
+    }
+  }
+  function clear3D() {
+    V3.group.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach(m => m.dispose()); });
+    V3.group.clear();
+    V3.labels.forEach(L => L.el.remove()); V3.labels = [];
+  }
+  function label3D(text, pos, color, cls) {
+    const el = document.createElement('div'); el.className = 'lb' + (cls ? ' ' + cls : ''); el.textContent = text; el.style.color = color;
+    $('v3').append(el); V3.labels.push({ el, pos });
+  }
+  function build3D(d) {
+    if (!V3.renderer && !init3D()) return;
+    clear3D();
+    const G = V3.group, col = (v) => new THREE.Color(css(v));
+    const mat = (c, o, extra) => new THREE.MeshStandardMaterial(Object.assign({ color: c, transparent: o < 1, opacity: o, roughness: 0.75, metalness: 0, depthWrite: o >= 1, side: THREE.DoubleSide }, extra || {}));
+    const acc = col('--accent'), ink = css('--ink'), muted = css('--muted');
+    // 층
+    const layers = stack === 'Si' ? [['SiO₂', 0, 0.002, '--muted', 0.5], ['Si 기판', 0.002, ZMAX, '--bb', 0.13]]
+      : [['SiO₂', 0, 0.002, '--muted', 0.5], ['Si cap', 0.002, 0.012, '--bb', 0.22], ['SiGe 25%', 0.012, 0.062, '--sige', 0.55], ['Si 기판', 0.062, ZMAX, '--bb', 0.13]];
+    for (const [name, z0, z1, c, o] of layers) {
+      const y0 = PY(z0), y1 = PY(z1), hgt = Math.max(0.06, y0 - y1);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(LAT, hgt, LAT), mat(col(c), o));
+      m.position.y = (y0 + y1) / 2; m.renderOrder = 1; G.add(m);
+      const e = new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry), new THREE.LineBasicMaterial({ color: col('--muted'), transparent: true, opacity: 0.45 }));
+      e.position.copy(m.position); G.add(e);
+      if (name !== 'SiO₂' && name !== 'Si cap') label3D(name, new THREE.Vector3(-LAT / 2 - 0.4, (y0 + y1) / 2, LAT / 2 + 0.4), css(c));
+    }
+    // 여기광 흡수 깊이
+    const ab = new THREE.Mesh(new THREE.BoxGeometry(LAT * 0.999, PY(0) - PY(1.27), LAT * 0.999), mat(new THREE.Color('#2ea05a'), 0.14));
+    ab.position.y = PY(1.27) / 2; ab.renderOrder = 2; G.add(ab);
+    label3D('532 nm 흡수 깊이 1.3 µm', new THREE.Vector3(LAT / 2 + 0.4, PY(1.27), -LAT / 2), '#2ea05a');
+    for (const z of [1, 5, 10]) label3D(z + ' µm', new THREE.Vector3(LAT / 2 + 0.6, PY(z), LAT / 2 + 0.6), muted);
+    // 결함
+    const dm = mat(acc, 1, { emissive: acc, emissiveIntensity: 0.25, roughness: 0.4 });
+    const tube = (pts, r, m) => { const t = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), Math.max(8, pts.length * 4), r, 10, false), m || dm); G.add(t); return t; };
+    const P = (x, y, z) => new THREE.Vector3(PX(x), PY(z), PZ(y));
+    let defLab = null, note = '';
+    switch (d.key) {
+      case 'normal': defLab = ['결함 없음', P(24, 24, 0.3)]; break;
+      case 'point_region': {
+        const zTop = 0, zBot = 6, R = 4 * SC, cy = (PY(zTop) + PY(zBot)) / 2, ry = (PY(zTop) - PY(zBot)) / 2;
+        const s = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 20), mat(acc, 0.16)); s.scale.set(R, ry, R); s.position.set(0, cy, 0); s.renderOrder = 3; G.add(s);
+        const rr = rnd(3), pos = [];
+        for (let i = 0; i < 160; i++) { let x, y, z; do { x = rr() * 2 - 1; y = rr() * 2 - 1; z = rr() * 2 - 1; } while (x * x + y * y + z * z > 1); pos.push(x * R, cy + y * ry, z * R); }
+        const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+        G.add(new THREE.Points(pg, new THREE.PointsMaterial({ color: acc, size: 0.22 })));
+        defLab = ['수명 저하 영역 (지름 8 µm) · 점 = 불순물/점결함', new THREE.Vector3(0, PY(0) + 1.4, 0)];
+        note = '점결함 하나하나는 원자 크기라 영역 전체로만 나타납니다.'; break;
+      }
+      case 'loop': {
+        const R = 2.2, y = PY(1);
+        const disc = new THREE.Mesh(new THREE.CircleGeometry(R, 48), mat(acc, 0.28)); disc.rotation.x = -Math.PI / 2; disc.position.y = y; disc.renderOrder = 3; G.add(disc);
+        const tor = new THREE.Mesh(new THREE.TorusGeometry(R, 0.13, 12, 72), dm); tor.rotation.x = Math.PI / 2; tor.position.y = y; G.add(tor);
+        defLab = ['전위 루프 (실제 지름 100 nm, 확대 표시)', new THREE.Vector3(0, y + 1.3, 0)];
+        note = '원판(끼어든 원자면)의 둘레가 닫힌 전위선입니다. 위에서 보면 한 점으로 보이는 이유를 확인해 보세요.'; break;
+      }
+      case 'threading':
+        tube([P(24, 24, 0.002), P(24, 24, 4), P(24, 24, 8)], 0.14);
+        defLab = ['관통 전위 — 표면까지 이어진 선', P(24, 24, 0).add(new THREE.Vector3(0, 1.3, 0))];
+        note = '위에서 보면 점, 옆에서 보면 선입니다.'; break;
+      case 'misfit':
+        tube([P(0, 24, 0.062), P(48, 24, 0.062)], 0.12); tube([P(24, 0, 0.062), P(24, 48, 0.062)], 0.12);
+        defLab = ['SiGe/Si 계면의 misfit 전위 [110] · [1-10]', P(40, 24, 0.062).add(new THREE.Vector3(0, 1.4, 0))];
+        note = '두 방향의 직선이 계면에 놓여 있어, 위에서 보면 십자(여러 개면 격자무늬)로 보입니다.'; break;
+      case 'stacking_fault': {
+        const th = 54.7356 * Math.PI / 180, a = 8, off = a * Math.cos(th), dep = a * Math.sin(th), y0 = 22;
+        const A0 = P(24 - a / 2, y0, 0.002), A1 = P(24 + a / 2, y0, 0.002);
+        const N = 12, verts = [];
+        for (let i = 0; i < N; i++) { // √ 깊이에서도 면이 매끈하게 보이도록 띠로 분할
+          const t0 = i / N, t1 = (i + 1) / N;
+          const p = (t, s) => P(24 + (s - 0.5) * a * (1 - t), y0 + off * t, dep * t);
+          verts.push(...p(t0, 0).toArray(), ...p(t0, 1).toArray(), ...p(t1, 0).toArray(), ...p(t0, 1).toArray(), ...p(t1, 1).toArray(), ...p(t1, 0).toArray());
+        }
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3)); g.computeVertexNormals();
+        const pl = new THREE.Mesh(g, mat(acc, 0.3)); pl.renderOrder = 3; G.add(pl);
+        const edge = (s) => { const pts = []; for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push(P(24 + (s - 0.5) * a * (1 - t), y0 + off * t, dep * t)); } return pts; };
+        tube(edge(0), 0.11); tube(edge(1), 0.11);
+        tube([A0, A1], 0.05, mat(col('--muted'), 1));
+        defLab = ['{111} 적층 결함면 (54.7° 기울기)', P(24, y0, 0).add(new THREE.Vector3(0, 1.3, 0))];
+        note = '빨간 테두리는 부분전위(D-line 발광), 반투명 면이 적층 결함입니다. 위에서 보면 삼각형입니다.'; break;
+      }
+      case 'precipitate': {
+        const s = new THREE.Mesh(new THREE.IcosahedronGeometry(0.9, 2), mat(col('--cluster'), 1, { roughness: 0.9 })); s.position.copy(P(24, 24, 3)); G.add(s);
+        const halo = new THREE.Mesh(new THREE.SphereGeometry(1.6, 24, 16), mat(col('--cluster'), 0.15)); halo.position.copy(s.position); halo.renderOrder = 3; G.add(halo);
+        defLab = ['SiOₓ 석출물 (실제 0.5 µm, 확대) · 바깥 = 응력장', s.position.clone().add(new THREE.Vector3(0, 2.2, 0))];
+        note = '깊이 3 µm — 여기광이 대부분 흡수되는 깊이(초록)보다 아래에 있습니다.'; break;
+      }
+      case 'void': {
+        const o = new THREE.Mesh(new THREE.OctahedronGeometry(0.9), mat(col('--panel'), 0.9)); o.position.copy(P(24, 24, 2)); G.add(o);
+        const e = new THREE.LineSegments(new THREE.EdgesGeometry(o.geometry), new THREE.LineBasicMaterial({ color: acc })); e.position.copy(o.position); G.add(e);
+        defLab = ['팔면체 빈 공간 (실제 0.3 µm, 확대)', o.position.clone().add(new THREE.Vector3(0, 1.8, 0))];
+        note = '내벽만 재결합에 관여하고 크기가 작아 PL 신호 변화가 거의 없습니다.'; break;
+      }
+      case 'ge_cluster': {
+        const R = 1 * SC * 1.6, y0 = PY(0.012), y1 = PY(0.062);
+        const s = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 16), mat(col('--sige'), 1, { emissive: col('--sige'), emissiveIntensity: 0.5 }));
+        s.scale.set(R, (y0 - y1) / 2 * 0.95, R); s.position.set(0, (y0 + y1) / 2, 0); G.add(s);
+        defLab = ['Ge 농도가 높은 영역 (지름 2 µm) — SiGe 층 안', new THREE.Vector3(0, PY(0) + 1.5, 0)];
+        note = '얇은 SiGe 층(주황) 안에 있습니다. 밴드갭이 낮아 주변 캐리어가 모여듭니다.'; break;
+      }
+      case 'particle': {
+        const s = new THREE.Mesh(new THREE.DodecahedronGeometry(1.3, 0), mat(col('--muted'), 1, { roughness: 0.95 })); s.scale.set(1, 0.6, 1); s.position.set(0, PY(0) + 0.75, 0); G.add(s);
+        const sh = new THREE.Mesh(new THREE.CircleGeometry(1.6, 32), mat(new THREE.Color('#000000'), 0.35)); sh.rotation.x = -Math.PI / 2; sh.position.y = PY(0) + 0.02; G.add(sh);
+        const gm = new THREE.LineBasicMaterial({ color: 0x2ea05a });
+        for (const [x, z] of [[-3, -2], [3, 2], [0, 4], [-2, 3]]) {
+          const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x, 9, z), new THREE.Vector3(x, PY(0) + 0.1, z)]); G.add(new THREE.Line(g, gm));
+        }
+        defLab = ['표면 파티클 (지름 4 µm) — 아래로 여기광 차단', new THREE.Vector3(0, PY(0) + 2.4, 0)];
+        note = '초록 선은 여기광입니다. 파티클 아래만 그늘이 지고, 캐리어가 옆에서 확산해 들어와 일부 메워집니다.'; break;
+      }
+    }
+    if (defLab) label3D(defLab[0], defLab[1], ink, 'def');
+    $('cap3D').textContent = (note ? note + ' ' : '') + '드래그해서 돌려 보세요. 깊이축은 √ 스케일이고, 1 µm보다 작은 결함은 확대해서 그렸습니다.';
+    kick();
+  }
+
+  // ---------------- 목록 · 표 ----------------
+  function renderIndex() {
+    const idx = $('idx'); idx.innerHTML = '';
+    DEF.forEach((d, i) => {
+      const b = document.createElement('button');
+      b.innerHTML = `<span class="glyph">${d.glyph}</span><span>${d.name}</span><span class="na">${avail(d) ? '' : 'SiGe 전용'}</span>`;
+      b.disabled = !avail(d); b.setAttribute('aria-current', i === cur ? 'true' : 'false');
+      b.addEventListener('click', () => select(i));
+      idx.append(b);
+    });
+  }
+  function chip(st) {
+    if (!st) return '<span class="chip none">—</span>';
+    if (!st.det) return '<span class="chip none">검출 어려움</span>';
+    const c = st.contrast * 100, big = Math.abs(c) >= 1000;
+    const txt = (c > 0 ? '▲ ' : '▼ ') + (big ? (c / 100).toFixed(0) + '×' : (c > 0 ? '+' : '') + c.toFixed(1) + '%');
+    return `<span class="chip ${c > 0 ? 'up' : 'down'}">${txt}</span>`;
+  }
+  const SPEC_NOTE = { normal: 'Si ~1125 nm (+SiGe ~1360 nm)', point_region: '새 피크 없이 세기만 감소', loop: 'D1 1.55 µm 피크 추가', threading: 'D1·D2 피크 추가, BB 약간 감소', misfit: 'SiGe 피크 감소 + D-line', stacking_fault: '경계에서 D-line', precipitate: '약한 D-line (크기 의존)', void: '변화 거의 없음', ge_cluster: '피크 적색 이동 (~1460 nm), 세기 급증', particle: '세기 감소, D-line 없음 (SiGe 구조는 Si 쪽으로 이동)' };
+  function renderMatrix() {
+    const S = DATA.stacks[stack], t = $('matrix');
+    let html = `<thead><tr><th>결함</th>${CH.map(c => `<th>${c.name} <span style="font-weight:400">${c.band}</span></th>`).join('')}<th>스펙트럼 특징</th></tr></thead><tbody>`;
+    DEF.forEach((d, i) => {
+      if (d.key === 'normal') return;
+      const rec = S.defects[d.key];
+      html += `<tr class="clickable" data-i="${i}" aria-current="${i === cur}"><td><b>${d.name}</b></td>`;
+      if (!rec) html += `<td colspan="3" class="muted">SiGe 구조에서만 생기는 결함</td>`;
+      else html += CH.map((c, ci) => `<td>${chip(rec.stats && rec.stats[0][ci])}</td>`).join('');
+      html += `<td class="muted">${SPEC_NOTE[d.key]}</td></tr>`;
+    });
+    t.innerHTML = html + '</tbody>';
+    t.querySelectorAll('tr.clickable').forEach(tr => tr.addEventListener('click', () => { const i = +tr.dataset.i; if (avail(DEF[i])) { select(i); $('plate').scrollIntoView({ behavior: 'smooth', block: 'start' }); } }));
+  }
+
+  function renderPlate() {
+    const d = DEF[cur];
+    $('pName').textContent = d.name; $('pEng').textContent = d.eng;
+    $('pTags').innerHTML = d.tags.map(t => `<span class="tag">${t}</span>`).join('');
+    $('pCause').innerHTML = d.cause.map(c => `<li>${c}</li>`).join('');
+    $('pShape').textContent = d.shape; $('pMech').textContent = d.mech; $('pVerdict').innerHTML = d.verdict;
+    drawLattice(d.lattice); drawCross(d); build3D(d); drawPL(d); drawSpec(d);
+  }
+  function select(i) {
+    if (!avail(DEF[i])) return;
+    cur = i;
+    try { history.replaceState(null, '', '#' + DEF[i].key); } catch (e) {}
+    renderIndex(); renderMatrix(); renderPlate();
+  }
+  function setStack(s) {
+    stack = s; try { localStorage.setItem('pl-atlas-stack', s); } catch (e) {}
+    $('stSi').setAttribute('aria-pressed', s === 'Si'); $('stSiGe').setAttribute('aria-pressed', s === 'SiGe');
+    if (!avail(DEF[cur])) cur = 2;
+    renderIndex(); renderMatrix(); renderPlate();
+  }
+  document.querySelectorAll('[data-stack]').forEach(b => b.addEventListener('click', () => setStack(b.dataset.stack)));
+  document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => {
+    view = b.dataset.view; document.querySelectorAll('[data-view]').forEach(x => x.setAttribute('aria-pressed', x === b)); drawPL(DEF[cur]);
+  }));
+  $('chkComp').addEventListener('change', () => drawSpec(DEF[cur]));
+  $('chkLog').addEventListener('change', () => drawSpec(DEF[cur]));
+  window.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+    if (!step) return;
+    e.preventDefault();
+    let i = cur; do { i = (i + step + DEF.length) % DEF.length; } while (!avail(DEF[i]));
+    select(i);
+  });
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(renderPlate, 120); });
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', renderPlate);
+  new MutationObserver(renderPlate).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  setStack(stack);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderPlate);
+})();
+</script>
